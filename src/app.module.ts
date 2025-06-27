@@ -1,19 +1,25 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import typeormPostgresConfig from './shared/database/config/typeorm.env';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { typeOrmConfig } from './shared/database/typeorm.config';
+import { RuralProducerModule } from './modules/rural-producers/rural-producer.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      load: [typeormPostgresConfig],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: typeOrmConfig,
       inject: [ConfigService],
+      useFactory: (configService: ConfigService) =>
+        configService.get<TypeOrmModuleOptions>(
+          'typeorm'
+        ) as TypeOrmModuleOptions,
     }),
+    RuralProducerModule,
   ],
 })
 export class AppModule {}
