@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
-import typeormPostgresConfig from './shared/database/config/typeorm.env';
+import typeormPostgresConfig from './database/config/typeorm.env';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RuralProducerModule } from './modules/rural-producers/rural-producer.module';
 

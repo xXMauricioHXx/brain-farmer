@@ -8,6 +8,9 @@ export class CreateCropsTable1751027257524 implements MigrationInterface {
         name VARCHAR(255) NOT NULL,
         harvest_year INT NOT NULL,
         farm_id UUID NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT now(),
+        updated_at TIMESTAMP NOT NULL DEFAULT now(),
+        deleted_at TIMESTAMP,
 
         CONSTRAINT fk_farm FOREIGN KEY (farm_id) REFERENCES tb_farms(id) ON DELETE CASCADE
       );

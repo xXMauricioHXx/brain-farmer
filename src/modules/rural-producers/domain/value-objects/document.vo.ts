@@ -1,4 +1,5 @@
 import { cpf, cnpj } from 'cpf-cnpj-validator';
+import { InvalidDocumentException } from '../execeptions/invalid-document.exception';
 
 export class Document {
   private constructor(private readonly value: string) {}
@@ -7,7 +8,7 @@ export class Document {
     const cleaned = raw.replace(/\D/g, '');
 
     if (!cpf.isValid(cleaned) && !cnpj.isValid(cleaned)) {
-      throw new Error(`Invalid document: ${raw}`);
+      throw new InvalidDocumentException(cleaned);
     }
 
     return new Document(cleaned);

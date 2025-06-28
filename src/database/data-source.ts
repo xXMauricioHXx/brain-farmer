@@ -1,5 +1,6 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { config } from 'dotenv';
+import path from 'path';
 
 config();
 
@@ -11,14 +12,8 @@ export const createDatabaseConfig = (): DataSourceOptions => {
     username: process.env.PG_USERNAME,
     password: process.env.PG_PASSWORD,
     database: process.env.PG_DATABASE,
-    entities: [
-      'src/shared/database/models/*.model.ts',
-      'dist/shared/database/models/*.model.js',
-    ],
-    migrations: [
-      'src/shared/database/migrations/*.ts',
-      'dist/shared/database/migrations/*.js',
-    ],
+    entities: [path.resolve(__dirname, 'models', '*.model.{ts,js}')],
+    migrations: [path.resolve(__dirname, 'migrations/*.{ts,js}')],
     synchronize: false,
     logging: process.env.PG_LOGGING === 'true' ? ['warn', 'error'] : ['error'],
   };

@@ -12,6 +12,9 @@ export class CreateFarmTable1751027058507 implements MigrationInterface {
         vegetation_area NUMERIC(18,6) NOT NULL,
         city VARCHAR(100) NOT NULL,
         state VARCHAR(2) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT now(),
+        updated_at TIMESTAMP NOT NULL DEFAULT now(),
+        deleted_at TIMESTAMP,
 
         CONSTRAINT fk_producer FOREIGN KEY (producer_id) REFERENCES tb_rural_producers(id) ON DELETE CASCADE
       );

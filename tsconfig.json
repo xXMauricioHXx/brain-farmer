@@ -11,6 +11,7 @@
     "outDir": "./dist",
     "rootDir": ".",
     "baseUrl": "./",
+    "types": ["jest"],
     "incremental": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
@@ -18,8 +19,9 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@/modules": ["src/modules/*"]
     }
   },
-  "include": ["."]
+  "include": ["src", "test"]
 }

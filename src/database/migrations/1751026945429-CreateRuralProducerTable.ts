@@ -8,7 +8,10 @@ export class CreateRuralProducerTable1751026945429
       CREATE TABLE IF NOT EXISTS tb_rural_producers (
         id UUID PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
-        document VARCHAR(14) NOT NULL UNIQUE
+        document VARCHAR(14) NOT NULL UNIQUE,
+        created_at TIMESTAMP NOT NULL DEFAULT now(),
+        updated_at TIMESTAMP NOT NULL DEFAULT now(),
+        deleted_at TIMESTAMP
       );
     `);
 
