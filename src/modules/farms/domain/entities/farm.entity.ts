@@ -1,16 +1,18 @@
 import { Decimal } from 'decimal.js';
 import { BaseEntity } from 'src/shared/contracts/base-entity';
-import { IsUUID, IsString, IsInstance } from 'class-validator';
+import { IsUUID, IsString, IsInstance, IsOptional } from 'class-validator';
+import { InvalidDocumentException } from '../exceptions/invalid-farm-area.exception';
 
 export type FarmAttributes = {
   id: string;
-  producerId: string;
+  ruralProducerId: string;
   name: string;
   totalArea: number;
   agricultureArea: number;
   vegetationArea: number;
   city: string;
   state: string;
+  createdAt?: Date;
 };
 
 export class Farm extends BaseEntity {
@@ -21,7 +23,7 @@ export class Farm extends BaseEntity {
   name: string;
 
   @IsUUID()
-  producerId: string;
+  ruralProducerId: string;
 
   @IsInstance(Decimal)
   totalArea: Decimal;
@@ -38,6 +40,10 @@ export class Farm extends BaseEntity {
   @IsString()
   state: string;
 
+  @IsInstance(Date)
+  @IsOptional()
+  createdAt?: Date;
+
   private constructor(input: FarmAttributes) {
     super();
 
@@ -45,10 +51,11 @@ export class Farm extends BaseEntity {
     this.name = input.name;
     this.city = input.city;
     this.state = input.state;
-    this.producerId = input.producerId;
+    this.ruralProducerId = input.ruralProducerId;
     this.totalArea = new Decimal(input.totalArea);
     this.vegetationArea = new Decimal(input.vegetationArea);
     this.agricultureArea = new Decimal(input.agricultureArea);
+    this.createdAt = input.createdAt;
 
     this.validateAreas();
   }
@@ -60,10 +67,12 @@ export class Farm extends BaseEntity {
   }
 
   private validateAreas(): void {
-    const sum = this.agricultureArea.plus(this.vegetationArea);
-    if (sum.gt(this.totalArea)) {
-      throw new Error(
-        `Invalid areas: agriculture (${this.agricultureArea.toFixed()}) + vegetation (${this.vegetationArea.toFixed()}) exceeds total area (${this.totalArea.toFixed()})`,
+    const total = this.agricultureArea.plus(this.vegetationArea);
+    if (total.gt(this.totalArea)) {
+      throw new InvalidDocumentException(
+        total.toString(),
+        this.agricultureArea.toString(),
+        this.vegetationArea.toString()
       );
     }
   }
