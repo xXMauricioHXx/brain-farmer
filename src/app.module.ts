@@ -1,7 +1,11 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
-import typeormPostgresConfig from './database/config/typeorm.env';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+
+import { FarmModule } from './modules/farms/farm.module';
+import { CropModule } from './modules/crops/crop.module';
+import typeormPostgresConfig from './database/config/typeorm.env';
+import { HarvestModule } from './modules/harvests/harvest.module';
 import { RuralProducerModule } from './modules/rural-producers/rural-producer.module';
 
 @Module({
@@ -19,6 +23,9 @@ import { RuralProducerModule } from './modules/rural-producers/rural-producer.mo
           'typeorm'
         ) as TypeOrmModuleOptions,
     }),
+    FarmModule,
+    CropModule,
+    HarvestModule,
     RuralProducerModule,
   ],
 })

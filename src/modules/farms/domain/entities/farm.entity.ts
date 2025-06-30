@@ -1,18 +1,22 @@
 import { Decimal } from 'decimal.js';
-import { BaseEntity } from 'src/shared/contracts/base-entity';
 import { IsUUID, IsString, IsInstance, IsOptional } from 'class-validator';
-import { InvalidDocumentException } from '../exceptions/invalid-farm-area.exception';
+
+import { Crop } from '@/farms/domain/entities/crop.entity';
+import { BaseEntity } from '@/shared/contracts/base-entity';
+import { InvalidDocumentException } from '@/farms/domain/exceptions/invalid-farm-area.exception';
+import { PlantedAreaExceedsLimitException } from '@/farms/domain/exceptions/planted-area-exceeds-limit.exception';
 
 export type FarmAttributes = {
   id: string;
-  ruralProducerId: string;
-  name: string;
-  totalArea: number;
-  agricultureArea: number;
-  vegetationArea: number;
   city: string;
+  name: string;
   state: string;
+  crops?: Crop[];
   createdAt?: Date;
+  totalArea: Decimal;
+  vegetationArea: Decimal;
+  ruralProducerId: string;
+  agricultureArea: Decimal;
 };
 
 export class Farm extends BaseEntity {
@@ -44,6 +48,9 @@ export class Farm extends BaseEntity {
   @IsOptional()
   createdAt?: Date;
 
+  @IsOptional()
+  crops?: Crop[];
+
   private constructor(input: FarmAttributes) {
     super();
 
@@ -51,11 +58,12 @@ export class Farm extends BaseEntity {
     this.name = input.name;
     this.city = input.city;
     this.state = input.state;
-    this.ruralProducerId = input.ruralProducerId;
-    this.totalArea = new Decimal(input.totalArea);
-    this.vegetationArea = new Decimal(input.vegetationArea);
-    this.agricultureArea = new Decimal(input.agricultureArea);
+    this.totalArea = input.totalArea;
     this.createdAt = input.createdAt;
+    this.vegetationArea = input.vegetationArea;
+    this.ruralProducerId = input.ruralProducerId;
+    this.agricultureArea = input.agricultureArea;
+    this.crops = input.crops || [];
 
     this.validateAreas();
   }
@@ -70,9 +78,25 @@ export class Farm extends BaseEntity {
     const total = this.agricultureArea.plus(this.vegetationArea);
     if (total.gt(this.totalArea)) {
       throw new InvalidDocumentException(
-        total.toString(),
+        this.totalArea.toString(),
         this.agricultureArea.toString(),
         this.vegetationArea.toString()
+      );
+    }
+  }
+
+  public validatePlantedAreaLimit(crop: Crop): void {
+    const currentPlantedArea = this.crops.reduce(
+      (acc, crop) => acc.plus(crop.plantedArea),
+      new Decimal(0)
+    );
+
+    const totalPlantedArea = currentPlantedArea.plus(crop.plantedArea);
+
+    if (totalPlantedArea.gt(this.agricultureArea)) {
+      throw new PlantedAreaExceedsLimitException(
+        totalPlantedArea.toFixed(),
+        this.agricultureArea.toFixed()
       );
     }
   }

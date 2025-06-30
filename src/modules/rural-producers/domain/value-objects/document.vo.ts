@@ -1,4 +1,5 @@
 import { cpf, cnpj } from 'cpf-cnpj-validator';
+
 import { InvalidDocumentException } from '../execeptions/invalid-document.exception';
 
 export class Document {

@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { CreateRuralProducerInput } from '../dtos/create-rural-producer.dto';
-import { RuralProducerService } from '../services/rural-producer.service';
-import { ListRuralProducerOutput } from '../dtos/list-rural-producer.dto';
+
+import { RuralProducerService } from '@/rural-producers/application/services/rural-producer.service';
+import { ListRuralProducerOutput } from '@/rural-producers/application/dtos/list-rural-producer.dto';
+import { CreateRuralProducerInput } from '@/rural-producers/application/dtos/create-rural-producer.dto';
 
 @Controller('rural-producers')
 export class RuralProducerController {

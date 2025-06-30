@@ -38,4 +38,5 @@ export type CreateFarmOutput = {
   state: string;
   city: string;
   ruralProducerId: string;
+  createdAt: Date;
 };

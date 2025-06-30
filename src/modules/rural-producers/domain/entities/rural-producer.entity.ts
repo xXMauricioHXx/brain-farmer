@@ -5,8 +5,9 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { BaseEntity } from '@/shared/contracts/base-entity';
+
 import { Document } from '../value-objects/document.vo';
+import { BaseEntity } from '@/shared/contracts/base-entity';
 
 export type RuralProducerAttributes = {
   id: string;

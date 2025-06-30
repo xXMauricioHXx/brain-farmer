@@ -1,11 +1,11 @@
-import { IsNumber, IsString, IsUUID } from 'class-validator';
-import { BaseEntity } from 'src/shared/contracts/base-entity';
+import { IsUUID, IsString, IsOptional, IsInstance } from 'class-validator';
+import { Decimal } from 'decimal.js';
+import { BaseEntity } from '@/shared/contracts/base-entity';
 
 export type CropAttributes = {
   id: string;
   name: string;
-  harvestYear: number;
-  farmId: string;
+  createdAt?: Date;
 };
 
 export class Crop extends BaseEntity {
@@ -15,18 +15,15 @@ export class Crop extends BaseEntity {
   @IsString()
   name: string;
 
-  @IsNumber()
-  harvestYear: number;
-
-  @IsUUID()
-  farmId: string;
+  @IsOptional()
+  @IsInstance(Date)
+  createdAt?: Date;
 
   private constructor(input: CropAttributes) {
     super();
     this.id = input.id;
     this.name = input.name;
-    this.harvestYear = input.harvestYear;
-    this.farmId = input.farmId;
+    this.createdAt = input.createdAt;
   }
 
   public static instance(input: CropAttributes): Crop {

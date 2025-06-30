@@ -5,18 +5,17 @@ import {
   Injectable,
   BadRequestException,
   ConflictException,
-  HttpException,
-  InternalServerErrorException,
 } from '@nestjs/common';
+
 import {
   CreateRuralProducerInput,
   CreateRuralProducerOutput,
-} from '../dtos/create-rural-producer.dto';
-import { RuralProducer } from '../../domain/entities/rural-producer.entity';
-import { IRuralProducerRepository } from '../../domain/repositories/rural-producer.repository';
-import { RURAL_PRODUCER_REPOSITORY } from '@/shared/tokens/repositories/rural-producer.repository.token';
-import { InvalidDocumentException } from '../../domain/execeptions/invalid-document.exception';
-import { ListRuralProducerOutput } from '../dtos/list-rural-producer.dto';
+} from '@/rural-producers/application/dtos/create-rural-producer.dto';
+import { RURAL_PRODUCER_REPOSITORY } from '@/shared/tokens';
+import { RuralProducer } from '@/rural-producers/domain/entities/rural-producer.entity';
+import { ListRuralProducerOutput } from '@/rural-producers/application/dtos/list-rural-producer.dto';
+import { IRuralProducerRepository } from '@/rural-producers/domain/repositories/rural-producer.repository';
+import { InvalidDocumentException } from '@/rural-producers/domain/execeptions/invalid-document.exception';
 
 @Injectable()
 export class RuralProducerService {
@@ -36,7 +35,7 @@ export class RuralProducerService {
       const { name, document } = input;
 
       const foundRuralProducer =
-        await this.ruralProducerRepository.findByDocument(document);
+        await this.ruralProducerRepository.checkExistsByDocument(document);
 
       if (foundRuralProducer) {
         this.logger.warn(
@@ -51,7 +50,8 @@ export class RuralProducerService {
         document,
       });
 
-      const newRuralProducer = await this.ruralProducerRepository.create(ruralProducer);
+      const newRuralProducer =
+        await this.ruralProducerRepository.create(ruralProducer);
 
       return {
         id: newRuralProducer.id,
@@ -69,13 +69,7 @@ export class RuralProducerService {
         throw new BadRequestException('Unable to process request');
       }
 
-      if (error instanceof HttpException) {
-        throw error;
-      }
-
-      throw new InternalServerErrorException(
-        'An unexpected error occurred while creating the rural producer.'
-      );
+      throw error;
     }
   }
 

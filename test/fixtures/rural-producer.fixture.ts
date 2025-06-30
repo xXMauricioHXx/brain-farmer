@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker/.';
 import { RuralProducerModel } from '@/database/models/rural-producer.model';
-import { cpf, cnpj } from 'cpf-cnpj-validator';
+import { cpf } from 'cpf-cnpj-validator';
 import {
   RuralProducer,
   RuralProducerAttributes,

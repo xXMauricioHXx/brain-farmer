@@ -5,7 +5,7 @@ export class CreateFarmTable1751027058507 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS tb_farms (
         id UUID PRIMARY KEY,
-        producer_id UUID NOT NULL,
+        rural_producer_id UUID NOT NULL,
         name VARCHAR(255) NOT NULL,
         total_area NUMERIC(18,6) NOT NULL,
         agriculture_area NUMERIC(18,6) NOT NULL,
@@ -16,7 +16,7 @@ export class CreateFarmTable1751027058507 implements MigrationInterface {
         updated_at TIMESTAMP NOT NULL DEFAULT now(),
         deleted_at TIMESTAMP,
 
-        CONSTRAINT fk_producer FOREIGN KEY (producer_id) REFERENCES tb_rural_producers(id) ON DELETE CASCADE
+        CONSTRAINT fk_producer FOREIGN KEY (rural_producer_id) REFERENCES tb_rural_producers(id) ON DELETE CASCADE
       );
     `);
   }

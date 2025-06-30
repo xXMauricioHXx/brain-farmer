@@ -26,7 +26,7 @@ export class RuralProducerModel {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @DeleteDateColumn({ name: 'deleted_at' })
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
   deletedAt?: Date;
 
   @OneToMany(() => FarmModel, farm => farm.ruralProducer)

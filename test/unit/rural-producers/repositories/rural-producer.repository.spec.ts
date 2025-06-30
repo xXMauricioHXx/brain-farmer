@@ -3,7 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RuralProducerRepository } from '@/modules/rural-producers/infrastructure/repositories/rural-producer.repository';
 import { RuralProducerModel } from '@/database/models/rural-producer.model';
-import { RuralProducerFixture } from '../../../fixtures/rutal-producer.fixture';
+import { RuralProducerFixture } from '../../../fixtures/rural-producer.fixture';
 
 describe('RuralProducerRepository', () => {
   let ruralProducerRepository: RuralProducerRepository;
@@ -19,6 +19,7 @@ describe('RuralProducerRepository', () => {
             create: jest.fn(),
             save: jest.fn(),
             find: jest.fn(),
+            exists: jest.fn(),
             findOne: jest.fn(),
           },
         },
@@ -49,7 +50,7 @@ describe('RuralProducerRepository', () => {
     });
   });
 
-  describe('findAll', () => {
+  describe('#findAll', () => {
     it('should return all producers that are not soft deleted', async () => {
       const ruralProducers = RuralProducerFixture.createManyRuralProducers(2);
 
@@ -67,29 +68,62 @@ describe('RuralProducerRepository', () => {
     });
   });
 
-  describe('findByDocument', () => {
-    it('should return a producer when found by document', async () => {
+  describe('#checkExistsByDocument', () => {
+    it('should return a true when found by document', async () => {
       const ruralProducer = RuralProducerFixture.createRuralProducer();
 
-      jest.spyOn(repository, 'findOne').mockResolvedValue(ruralProducer);
+      jest.spyOn(repository, 'exists').mockResolvedValue(true);
 
-      const result = await ruralProducerRepository.findByDocument(
+      const result = await ruralProducerRepository.checkExistsByDocument(
         ruralProducer.document
       );
 
-      expect(repository.findOne).toHaveBeenCalledWith({
-        where: { document: ruralProducer.document },
+      expect(repository.exists).toHaveBeenCalledWith({
+        where: { document: ruralProducer.document, deletedAt: null },
       });
-      expect(result).toEqual(RuralProducerFixture.entity(ruralProducer));
+      expect(result).toEqual(true);
     });
 
-    it('should return null when not found', async () => {
-      repository.findOne.mockResolvedValue(null);
+    it('should return false when not found', async () => {
+      const document = '00000000000';
+      repository.exists.mockResolvedValue(false);
 
       const result =
-        await ruralProducerRepository.findByDocument('00000000000');
+        await ruralProducerRepository.checkExistsByDocument(document);
 
-      expect(result).toBeNull();
+      expect(result).toEqual(false);
+      expect(repository.exists).toHaveBeenCalledWith({
+        where: { document, deletedAt: null },
+      });
+    });
+  });
+
+  describe('#checkExistsById', () => {
+    it('should return true when rural producer exists by id', async () => {
+      const ruralProducer = RuralProducerFixture.createRuralProducer();
+
+      jest.spyOn(repository, 'exists').mockResolvedValue(true);
+
+      const result = await ruralProducerRepository.checkExistsById(
+        ruralProducer.id
+      );
+
+      expect(repository.exists).toHaveBeenCalledWith({
+        where: { id: ruralProducer.id, deletedAt: null },
+      });
+      expect(result).toEqual(true);
+    });
+
+    it('should return false when rural producer does not exist by id', async () => {
+      const id = '00000000-0000-0000-0000-000000000000';
+      repository.exists.mockResolvedValue(false);
+
+      const result = await ruralProducerRepository.checkExistsById(id);
+
+      expect(result).toEqual(false);
+      expect(repository.exists).toHaveBeenCalledWith({
+        where: { id, deletedAt: null },
+      });
     });
   });
 });

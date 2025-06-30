@@ -15,12 +15,16 @@
     "incremental": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
-    "moduleResolution": "Node",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "paths": {
-      "@/*": ["src/*"],
-      "@/modules": ["src/modules/*"]
+      "@/modules": ["src/modules/*"],
+      "@/crops/*": ["src/modules/crops/*"],
+      "@/farms/*": ["src/modules/farms/*"],
+      "@/rural-producers/*": ["src/modules/rural-producers/*"],
+      "@/harvests/*": ["src/modules/harvests/*"],
+      "@/*": ["src/*"]
     }
   },
   "include": ["src", "test"]

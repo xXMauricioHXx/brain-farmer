@@ -1,14 +1,15 @@
-import { CropModel } from './crop.model';
+import { FarmCropHarvestModel } from './farm-crop-harvest.model';
 import { RuralProducerModel } from './rural-producer.model';
 import {
   Entity,
   Column,
   PrimaryColumn,
   ManyToOne,
-  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  JoinColumn,
+  OneToMany,
 } from 'typeorm';
 
 @Entity('tb_farms', { schema: 'public' })
@@ -16,24 +17,24 @@ export class FarmModel {
   @PrimaryColumn('uuid')
   id: string;
 
-  @ManyToOne(() => RuralProducerModel, ruralProducer => ruralProducer.farms, {
-    onDelete: 'CASCADE',
-  })
-  ruralProducer: RuralProducerModel;
-
-  @Column('uuid', { name: 'rural_producer_id' })
+  @Column({ name: 'rural_producer_id', type: 'uuid' })
   ruralProducerId: string;
 
   @Column()
   name: string;
 
-  @Column({ type: 'numeric', precision: 18, scale: 6 })
+  @Column({ type: 'numeric', precision: 18, scale: 6, name: 'total_area' })
   totalArea: string;
 
-  @Column({ type: 'numeric', precision: 18, scale: 6 })
+  @Column({
+    type: 'numeric',
+    precision: 18,
+    scale: 6,
+    name: 'agriculture_area',
+  })
   agricultureArea: string;
 
-  @Column({ type: 'numeric', precision: 18, scale: 6 })
+  @Column({ type: 'numeric', precision: 18, scale: 6, name: 'vegetation_area' })
   vegetationArea: string;
 
   @Column()
@@ -48,9 +49,18 @@ export class FarmModel {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @DeleteDateColumn({ name: 'deleted_at' })
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
   deletedAt?: Date;
 
-  @OneToMany(() => CropModel, crop => crop.farm)
-  crops: CropModel[];
+  @ManyToOne(() => RuralProducerModel, ruralProducer => ruralProducer.farms, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'rural_producer_id' })
+  ruralProducer: RuralProducerModel;
+
+  @OneToMany(
+    () => FarmCropHarvestModel,
+    farmCropHarvest => farmCropHarvest.farm
+  )
+  farmCropHarvests: FarmCropHarvestModel[];
 }

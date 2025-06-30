@@ -2,10 +2,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { Test } from '@nestjs/testing';
 import { RuralProducerService } from '@/modules/rural-producers/application/services/rural-producer.service';
 import { IRuralProducerRepository } from '@/modules/rural-producers/domain/repositories/rural-producer.repository';
-import { RURAL_PRODUCER_REPOSITORY } from '@/shared/tokens/repositories/rural-producer.repository.token';
-import { RuralProducerFixture } from '../../../fixtures/rutal-producer.fixture';
+import { RuralProducerFixture } from '../../../fixtures/rural-producer.fixture';
 import { RuralProducer } from '@/modules/rural-producers/domain/entities/rural-producer.entity';
 import { BadRequestException, ConflictException } from '@nestjs/common';
+import { RURAL_PRODUCER_REPOSITORY } from '@/shared/tokens';
 
 jest.mock('uuid', () => ({
   v4: jest.fn(),
@@ -24,7 +24,7 @@ describe('RuralProducerService', () => {
           useValue: {
             create: jest.fn(),
             findAll: jest.fn(),
-            findByDocument: jest.fn(),
+            checkExistsByDocument: jest.fn(),
           },
         },
       ],
@@ -54,8 +54,8 @@ describe('RuralProducerService', () => {
       };
 
       jest
-        .spyOn(ruralProducerRepository, 'findByDocument')
-        .mockResolvedValue(null);
+        .spyOn(ruralProducerRepository, 'checkExistsByDocument')
+        .mockResolvedValue(false);
 
       jest.spyOn(ruralProducerRepository, 'create').mockResolvedValue({
         ...ruralProducerEntity,
@@ -70,9 +70,9 @@ describe('RuralProducerService', () => {
         document: ruralProducer.document,
         createdAt: ruralProducer.createdAt,
       });
-      expect(ruralProducerRepository.findByDocument).toHaveBeenCalledWith(
-        ruralProducer.document
-      );
+      expect(
+        ruralProducerRepository.checkExistsByDocument
+      ).toHaveBeenCalledWith(ruralProducer.document);
       expect(ruralProducerRepository.create).toHaveBeenCalledWith(
         ruralProducerEntity
       );
@@ -80,15 +80,10 @@ describe('RuralProducerService', () => {
 
     it('should throw ConflictException if rural producer with document already exists', async () => {
       const ruralProducer = RuralProducerFixture.createRuralProducer();
-      const ruralProducerEntity = RuralProducerFixture.entity({
-        document: ruralProducer.document,
-        id: ruralProducer.id,
-        name: ruralProducer.name,
-      });
 
       jest
-        .spyOn(ruralProducerRepository, 'findByDocument')
-        .mockResolvedValue(ruralProducerEntity);
+        .spyOn(ruralProducerRepository, 'checkExistsByDocument')
+        .mockResolvedValue(true);
 
       const data = {
         name: ruralProducer.name,
@@ -105,9 +100,9 @@ describe('RuralProducerService', () => {
       expect(error.message).toBe('Unable to process request');
       expect(error.status).toBe(409);
       expect(error).toBeInstanceOf(ConflictException);
-      expect(ruralProducerRepository.findByDocument).toHaveBeenCalledWith(
-        ruralProducer.document
-      );
+      expect(
+        ruralProducerRepository.checkExistsByDocument
+      ).toHaveBeenCalledWith(ruralProducer.document);
       expect(ruralProducerRepository.create).not.toHaveBeenCalled();
     });
 
@@ -121,8 +116,8 @@ describe('RuralProducerService', () => {
       };
 
       jest
-        .spyOn(ruralProducerRepository, 'findByDocument')
-        .mockResolvedValue(null);
+        .spyOn(ruralProducerRepository, 'checkExistsByDocument')
+        .mockResolvedValue(false);
 
       let error;
 
@@ -136,9 +131,9 @@ describe('RuralProducerService', () => {
       expect(error.message).toBe('Unable to process request');
       expect(error.status).toBe(400);
       expect(error).toBeInstanceOf(BadRequestException);
-      expect(ruralProducerRepository.findByDocument).toHaveBeenCalledWith(
-        ruralProducer.document
-      );
+      expect(
+        ruralProducerRepository.checkExistsByDocument
+      ).toHaveBeenCalledWith(ruralProducer.document);
       expect(ruralProducerRepository.create).not.toHaveBeenCalled();
     });
   });
