@@ -3,7 +3,7 @@ import { IsUUID, IsString, IsInstance, IsOptional } from 'class-validator';
 
 import { BaseEntity } from '@/shared/contracts/base-entity';
 import { FarmCropHarvest } from '@/farms/domain/entities/farm-crop-harvest.entity';
-import { InvalidDocumentException } from '@/farms/domain/exceptions/invalid-farm-area.exception';
+import { InvalidFarmAreaException } from '@/farms/domain/exceptions/invalid-farm-area.exception';
 import { PlantedAreaExceedsLimitException } from '@/farms/domain/exceptions/planted-area-exceeds-limit.exception';
 
 export type FarmAttributes = {
@@ -77,7 +77,7 @@ export class Farm extends BaseEntity {
   private validateAreas(): void {
     const total = this.agricultureArea.plus(this.vegetationArea);
     if (total.gt(this.totalArea)) {
-      throw new InvalidDocumentException(
+      throw new InvalidFarmAreaException(
         this.totalArea.toString(),
         this.agricultureArea.toString(),
         this.vegetationArea.toString()

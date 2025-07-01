@@ -8,7 +8,10 @@ import { Test } from '@nestjs/testing';
 import { Farm } from '@/farms/domain/entities/farm.entity';
 import { FarmFixture } from '../../../fixtures/farm.fixture';
 import { FarmService } from '@/farms/application/services/farm.service';
-import { FARM_REPOSITORY, RURAL_PRODUCER_REPOSITORY } from '@/shared/tokens';
+import {
+  FARM_REPOSITORY,
+  RURAL_PRODUCER_REPOSITORY,
+} from '@/shared/repositories/tokens';
 import { IFarmRepository } from '@/farms/domain/repositories/farm.repository';
 import { IRuralProducerRepository } from '@/rural-producers/domain/repositories/rural-producer.repository';
 
@@ -161,10 +164,14 @@ describe('FarmService', () => {
     it('should list all farms', async () => {
       const farmModels = FarmFixture.createManyFarmsWithCrops(3);
       const farmEntities = farmModels.map(FarmFixture.entity);
+      const input = {
+        page: 1,
+        limit: 10,
+      };
 
       jest.spyOn(farmRepository, 'findAll').mockResolvedValue(farmEntities);
 
-      const result = await farmService.list();
+      const result = await farmService.listPaginated(input);
 
       expect(result).toHaveLength(3);
       expect(result[0]).toEqual({

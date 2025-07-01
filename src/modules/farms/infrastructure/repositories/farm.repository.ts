@@ -8,6 +8,9 @@ import { Farm } from '@/farms/domain/entities/farm.entity';
 import { IFarmRepository } from '@/farms/domain/repositories/farm.repository';
 import { FarmCropHarvestModel } from '@/database/models/farm-crop-harvest.model';
 import { FarmCropHarvest } from '@/farms/domain/entities/farm-crop-harvest.entity';
+import { PaginatedQueryInput } from '@/shared/repositories/dtos/paginated-query.dto';
+import { ListFarmsInput } from '@/farms/application/dtos/list-farms.dto';
+import { paginatedOptions } from '@/shared/repositories/paginated-options';
 
 export class FarmRepository implements IFarmRepository {
   constructor(
@@ -160,5 +163,22 @@ export class FarmRepository implements IFarmRepository {
       harvestYear: farmCropHarvest.harvest.year,
       plantedArea: new Decimal(farmCropHarvest.plantedArea),
     });
+  }
+
+  public async findPaginated(input: ListFarmsInput): Promise<[Farm[], number]> {
+    const [results, total] = await this.repository.findAndCount({
+      where: { deletedAt: null, ...(input.state && { state: input.state }) },
+      ...paginatedOptions(input),
+      order: { createdAt: 'DESC' },
+      relations: [
+        'farmCropHarvests',
+        'farmCropHarvests.crop',
+        'farmCropHarvests.harvest',
+      ],
+    });
+
+    const farms = results.map(this.mapFarmModelToEntity);
+
+    return [farms, total];
   }
 }

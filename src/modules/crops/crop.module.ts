@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { CROP_REPOSITORY } from '@/shared/tokens';
+import { CROP_REPOSITORY } from '@/shared/repositories/tokens';
 import { CropModel } from '@/database/models/crop.model';
 import { CropService } from './application/services/crop.service';
 import { CropController } from './application/controllers/crop.controller';

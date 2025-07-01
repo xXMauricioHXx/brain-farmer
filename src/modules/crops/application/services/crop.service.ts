@@ -6,11 +6,10 @@ import {
   CreateCropInput,
   CreateCropOutput,
 } from '@/crops/application/dtos/create-crop.dto';
-import { CROP_REPOSITORY } from '@/shared/tokens';
-import { ListCropsOutput } from '../dtos/list-crops.dto';
+import { CROP_REPOSITORY } from '@/shared/repositories/tokens';
+import { ListCropOutput } from '../dtos/list-crop.dto';
 import { Crop } from '@/crops/domain/entities/crop.entity';
 import { ICropRepository } from '@/crops/domain/repositories/crop.repository';
-import { FindCropByIdOutput } from '@/crops/application/dtos/find-crop-by-id.dto';
 
 @Injectable()
 export class CropService {
@@ -34,7 +33,7 @@ export class CropService {
     };
   }
 
-  async findAll(): Promise<ListCropsOutput[]> {
+  async findAll(): Promise<ListCropOutput[]> {
     const crops = await this.cropRepository.findAll();
 
     return crops.map(crop => ({
@@ -44,11 +43,11 @@ export class CropService {
     }));
   }
 
-  async findById(id: string): Promise<FindCropByIdOutput> {
+  async findById(id: string): Promise<ListCropOutput> {
     const crop = await this.cropRepository.findById(id);
 
     if (!crop) {
-      throw new NotFoundException(`Crop with id ${id} not found`);
+      throw new NotFoundException(`Crop not found`);
     }
 
     return {
@@ -62,7 +61,7 @@ export class CropService {
     const crop = await this.cropRepository.findById(id);
 
     if (!crop) {
-      throw new NotFoundException(`Crop with id ${id} not found`);
+      throw new NotFoundException(`Crop not found`);
     }
 
     crop.name = input.name;
@@ -74,7 +73,7 @@ export class CropService {
     const crop = await this.cropRepository.findById(id);
 
     if (!crop) {
-      throw new NotFoundException(`Crop with id ${id} not found`);
+      throw new NotFoundException(`Crop not found`);
     }
 
     await this.cropRepository.softDelete(id);

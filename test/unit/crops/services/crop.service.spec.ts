@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Test } from '@nestjs/testing';
 
-import { CROP_REPOSITORY } from '@/shared/tokens';
+import { CROP_REPOSITORY } from '@/shared/repositories/tokens';
 import { Crop } from '@/crops/domain/entities/crop.entity';
 import { CropFixture } from '../../../fixtures/crop.fixture';
 import { CropService } from '@/crops/application/services/crop.service';

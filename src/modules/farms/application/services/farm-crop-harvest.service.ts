@@ -13,7 +13,7 @@ import {
   CROP_REPOSITORY,
   FARM_REPOSITORY,
   HARVEST_REPOSITORY,
-} from '@/shared/tokens';
+} from '@/shared/repositories/tokens';
 import { FarmMapper } from '@/farms/application/mappers/farm.mapper';
 import { IFarmRepository } from '@/farms/domain/repositories/farm.repository';
 import { ICropRepository } from '@/crops/domain/repositories/crop.repository';

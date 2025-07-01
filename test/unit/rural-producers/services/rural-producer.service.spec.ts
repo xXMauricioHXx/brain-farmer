@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Test } from '@nestjs/testing';
 import { BadRequestException, ConflictException } from '@nestjs/common';
 
-import { RURAL_PRODUCER_REPOSITORY } from '@/shared/tokens';
+import { RURAL_PRODUCER_REPOSITORY } from '@/shared/repositories/tokens';
 import { RuralProducerFixture } from '../../../fixtures/rural-producer.fixture';
 import { RuralProducer } from '@/rural-producers/domain/entities/rural-producer.entity';
 import { RuralProducerService } from '@/rural-producers/application/services/rural-producer.service';

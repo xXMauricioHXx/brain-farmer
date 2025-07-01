@@ -9,7 +9,7 @@ import {
   FARM_REPOSITORY,
   CROP_REPOSITORY,
   HARVEST_REPOSITORY,
-} from '@/shared/tokens';
+} from '@/shared/repositories/tokens';
 import { Farm } from '@/farms/domain/entities/farm.entity';
 import { FarmFixture } from '../../../fixtures/farm.fixture';
 import { CropFixture } from '../../../fixtures/crop.fixture';

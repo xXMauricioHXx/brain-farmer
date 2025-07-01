@@ -5,7 +5,7 @@ import {
   FARM_REPOSITORY,
   HARVEST_REPOSITORY,
   CROP_REPOSITORY,
-} from '@/shared/tokens';
+} from '@/shared/repositories/tokens';
 import { CropModule } from '@/crops/crop.module';
 import { FarmModel } from '@/database/models/farm.model';
 import { CropModel } from '@/database/models/crop.model';

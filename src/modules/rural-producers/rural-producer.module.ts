@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { FarmModel } from '@/database/models/farm.model';
-import { RURAL_PRODUCER_REPOSITORY } from '@/shared/tokens';
+import { RURAL_PRODUCER_REPOSITORY } from '@/shared/repositories/tokens';
 import { RuralProducerModel } from '@/database/models/rural-producer.model';
 import { FarmCropHarvestModel } from '@/database/models/farm-crop-harvest.model';
 import { RuralProducerService } from './application/services/rural-producer.service';

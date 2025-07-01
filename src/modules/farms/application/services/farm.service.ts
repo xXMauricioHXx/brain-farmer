@@ -14,12 +14,19 @@ import {
 } from '@/farms/application/dtos/create-farm.dto';
 import { Farm } from '@/farms/domain/entities/farm.entity';
 import { FarmMapper } from '@/farms/application/mappers/farm.mapper';
-import { ListFarmsOutput } from '@/farms/application/dtos/list-farms.dto';
+import {
+  ListFarmsInput,
+  ListFarmsOutput,
+} from '@/farms/application/dtos/list-farms.dto';
 import { UpdateFarmInput } from '@/farms/application/dtos/update-farm.dto';
-import { FARM_REPOSITORY, RURAL_PRODUCER_REPOSITORY } from '@/shared/tokens';
+import {
+  FARM_REPOSITORY,
+  RURAL_PRODUCER_REPOSITORY,
+} from '@/shared/repositories/tokens';
 import { IFarmRepository } from '@/farms/domain/repositories/farm.repository';
-import { InvalidDocumentException } from '@/farms/domain/exceptions/invalid-farm-area.exception';
+import { InvalidFarmAreaException } from '@/farms/domain/exceptions/invalid-farm-area.exception';
 import { IRuralProducerRepository } from '@/rural-producers/domain/repositories/rural-producer.repository';
+import { PaginatedQueryOutput } from '@/shared/repositories/dtos/paginated-query.dto';
 
 @Injectable()
 export class FarmService {
@@ -50,9 +57,7 @@ export class FarmService {
         await this.ruralProducerRepository.checkExistsById(ruralProducerId);
 
       if (!foundRuralProducer) {
-        throw new NotFoundException(
-          `Rural producer with ID ${ruralProducerId} not found.`
-        );
+        throw new NotFoundException(`Rural producer not found.`);
       }
 
       const farm = Farm.instance({
@@ -82,7 +87,7 @@ export class FarmService {
     } catch (error) {
       this.logger.error(`Error creating farm: ${error.message}`, error.stack);
 
-      if (error instanceof InvalidDocumentException) {
+      if (error instanceof InvalidFarmAreaException) {
         throw new UnprocessableEntityException(error.message);
       }
 
@@ -90,17 +95,24 @@ export class FarmService {
     }
   }
 
-  async list(): Promise<ListFarmsOutput[]> {
-    const farms = await this.farmRepository.findAll();
+  async listPaginated(
+    input: ListFarmsInput
+  ): Promise<PaginatedQueryOutput<ListFarmsOutput>> {
+    const [farms, total] = await this.farmRepository.findPaginated(input);
 
-    return farms.map(farm => FarmMapper.entityToOutput(farm));
+    return {
+      items: farms.map(FarmMapper.entityToOutput),
+      limit: input.limit,
+      page: input.page,
+      total,
+    };
   }
 
   async findById(id: string): Promise<ListFarmsOutput> {
     const farm = await this.farmRepository.findById(id);
 
     if (!farm) {
-      throw new NotFoundException(`Farm with ID ${id} not found.`);
+      throw new NotFoundException(`Farm not found.`);
     }
 
     return FarmMapper.entityToOutput(farm);
@@ -110,7 +122,7 @@ export class FarmService {
     const farm = await this.farmRepository.findById(farmId);
 
     if (!farm) {
-      throw new NotFoundException(`Farm with ID ${farmId} not found.`);
+      throw new NotFoundException(`Farm not found.`);
     }
 
     const { name, city, state, ruralProducerId } = input;
@@ -127,7 +139,7 @@ export class FarmService {
     const farm = await this.farmRepository.findById(id);
 
     if (!farm) {
-      throw new NotFoundException(`Farm with ID ${id} not found.`);
+      throw new NotFoundException(`Farm not found.`);
     }
 
     await this.farmRepository.softDelete(farm.id);

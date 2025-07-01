@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   Put,
 } from '@nestjs/common';
@@ -31,13 +32,15 @@ export class RuralProducerController {
   }
 
   @Get('/:id')
-  async findById(@Body('id') id: string): Promise<FindRuralProducerByIdOutput> {
+  async findById(
+    @Param('id') id: string
+  ): Promise<FindRuralProducerByIdOutput> {
     return this.ruralProducerService.findById(id);
   }
 
   @Put('/:id')
   async update(
-    @Body('id') id: string,
+    @Param('id') id: string,
     @Body() data: UpdateRuralProducerInput
   ): Promise<void> {
     return this.ruralProducerService.update(id, data);
@@ -45,7 +48,7 @@ export class RuralProducerController {
 
   @Delete('/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Body('id') id: string): Promise<void> {
+  async delete(@Param('id') id: string): Promise<void> {
     return this.ruralProducerService.delete(id);
   }
 }

@@ -42,6 +42,7 @@ describe('FarmRepository', () => {
             findOne: jest.fn(),
             update: jest.fn(),
             softDelete: jest.fn(),
+            findAndCount: jest.fn(),
           },
         },
         {
@@ -266,6 +267,35 @@ describe('FarmRepository', () => {
         FarmModel,
         farmId
       );
+    });
+  });
+
+  describe('#findPaginated', () => {
+    it('should return paginated farms', async () => {
+      const farms = FarmFixture.createManyFarms(3);
+      const farmEntities = farms.map(FarmFixture.entity);
+
+      jest.spyOn(repository, 'findAndCount').mockResolvedValue([farms, 3]);
+
+      const [result, total] = await farmRepository.findPaginated({
+        page: 1,
+        limit: 10,
+      });
+
+      expect(repository.findAndCount).toHaveBeenCalledWith({
+        where: { deletedAt: null },
+        order: { createdAt: 'DESC' },
+        skip: 0,
+        take: 10,
+        relations: [
+          'farmCropHarvests',
+          'farmCropHarvests.crop',
+          'farmCropHarvests.harvest',
+        ],
+      });
+
+      expect(result).toEqual(farmEntities);
+      expect(total).toBe(3);
     });
   });
 });

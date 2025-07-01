@@ -12,7 +12,7 @@ import {
   CreateRuralProducerInput,
   CreateRuralProducerOutput,
 } from '@/rural-producers/application/dtos/create-rural-producer.dto';
-import { RURAL_PRODUCER_REPOSITORY } from '@/shared/tokens';
+import { RURAL_PRODUCER_REPOSITORY } from '@/shared/repositories/tokens';
 import { RuralProducer } from '@/rural-producers/domain/entities/rural-producer.entity';
 import { ListRuralProducerOutput } from '@/rural-producers/application/dtos/list-rural-producer.dto';
 import { UpdateRuralProducerInput } from '@/rural-producers/application/dtos/update-rural-producer.dto';

@@ -5,7 +5,7 @@ import {
   CreateHarvestInput,
   CreateHarvestOutput,
 } from '@/harvests/application/dtos/create-harvest.dto';
-import { HARVEST_REPOSITORY } from '@/shared/tokens';
+import { HARVEST_REPOSITORY } from '@/shared/repositories/tokens';
 import { Harvest } from '@/harvests/domain/entities/harvest.entity';
 import { ListHarvestsOutput } from '@/harvests/application/dtos/list-harvests.dto';
 import { IHarvestRepository } from '@/harvests/domain/repositories/harvest.repository';

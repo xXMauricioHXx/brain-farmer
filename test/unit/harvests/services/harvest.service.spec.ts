@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { v4 as uuidv4 } from 'uuid';
 
-import { HARVEST_REPOSITORY } from '@/shared/tokens';
+import { HARVEST_REPOSITORY } from '@/shared/repositories/tokens';
 import { HarvestFixture } from '../../../fixtures/harvest.fixture';
 import { HarvestService } from '@/harvests/application/services/harvest.service';
 import { IHarvestRepository } from '@/harvests/domain/repositories/harvest.repository';
