@@ -3,15 +3,22 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
 import { CropModel } from '@/database/models/crop.model';
+import { Crop } from '@/crops/domain/entities/crop.entity';
 import { CropFixture } from '../../../fixtures/crop.fixture';
-import { Crop } from '@/modules/crops/domain/entities/crop.entity';
-import { CropRepository } from '@/modules/crops/infrastructure/repositories/crop.repository';
+import { FarmCropHarvestModel } from '@/database/models/farm-crop-harvest.model';
+import { CropRepository } from '@/crops/infrastructure/repositories/crop.repository';
 
 describe('CropRepository', () => {
   let cropRepository: CropRepository;
   let repository: jest.Mocked<Repository<CropModel>>;
+  let entityManager: jest.Mocked<Repository<FarmCropHarvestModel>>;
 
   beforeEach(async () => {
+    entityManager = {
+      transaction: jest.fn(),
+      softDelete: jest.fn(),
+    } as unknown as jest.Mocked<Repository<FarmCropHarvestModel>>;
+
     const module = await Test.createTestingModule({
       providers: [
         CropRepository,
@@ -21,6 +28,18 @@ describe('CropRepository', () => {
             create: jest.fn(),
             save: jest.fn(),
             find: jest.fn(),
+            update: jest.fn(),
+            findOne: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(FarmCropHarvestModel),
+          useValue: {
+            manager: {
+              transaction: jest
+                .fn()
+                .mockImplementation(cb => cb(entityManager)),
+            },
           },
         },
       ],
@@ -63,6 +82,7 @@ describe('CropRepository', () => {
 
       expect(repository.find).toHaveBeenCalledWith({
         where: { deletedAt: null },
+        order: { createdAt: 'DESC' },
       });
 
       expect(result).toEqual(
@@ -73,6 +93,74 @@ describe('CropRepository', () => {
             createdAt: crop.createdAt,
           })
         )
+      );
+    });
+  });
+
+  describe('#findById', () => {
+    it('should return a crop by id', async () => {
+      const cropModel = CropFixture.createCrop();
+      jest.spyOn(repository, 'findOne').mockResolvedValue(cropModel);
+
+      const result = await cropRepository.findById(cropModel.id);
+
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: { id: cropModel.id, deletedAt: null },
+      });
+
+      expect(result).toEqual(
+        Crop.instance({
+          id: cropModel.id,
+          name: cropModel.name,
+          createdAt: cropModel.createdAt,
+        })
+      );
+    });
+
+    it('should return null if crop not found', async () => {
+      repository.findOne = jest.fn().mockResolvedValue(null);
+
+      const result = await cropRepository.findById('non-existing-id');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('#update', () => {
+    it('should update and return a crop entity', async () => {
+      const cropModel = CropFixture.createCrop();
+      const cropEntity = Crop.instance({
+        id: cropModel.id,
+        name: 'Updated Crop',
+        createdAt: cropModel.createdAt,
+      });
+
+      const result = await cropRepository.update(cropEntity);
+
+      expect(repository.update).toHaveBeenCalledWith(cropEntity.id, {
+        name: cropEntity.name,
+        updatedAt: expect.any(Date),
+      });
+
+      expect(result).toEqual(cropEntity);
+    });
+  });
+
+  describe('#softDelete', () => {
+    it('should soft delete a crop by id', async () => {
+      const cropId = 'crop-id';
+
+      await cropRepository.softDelete(cropId);
+
+      expect(entityManager.softDelete).toHaveBeenNthCalledWith(
+        1,
+        FarmCropHarvestModel,
+        { cropId }
+      );
+      expect(entityManager.softDelete).toHaveBeenNthCalledWith(
+        2,
+        CropModel,
+        cropId
       );
     });
   });

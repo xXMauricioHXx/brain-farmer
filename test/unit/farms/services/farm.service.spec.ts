@@ -2,16 +2,15 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import Decimal from 'decimal.js';
 import { v4 as uuidv4 } from 'uuid';
 import { Test } from '@nestjs/testing';
 
+import { Farm } from '@/farms/domain/entities/farm.entity';
 import { FarmFixture } from '../../../fixtures/farm.fixture';
-import { Farm } from '@/modules/farms/domain/entities/farm.entity';
+import { FarmService } from '@/farms/application/services/farm.service';
 import { FARM_REPOSITORY, RURAL_PRODUCER_REPOSITORY } from '@/shared/tokens';
-import { FarmService } from '@/modules/farms/application/services/farm.service';
-import { IFarmRepository } from '@/modules/farms/domain/repositories/farm.repository';
-import { IRuralProducerRepository } from '@/modules/rural-producers/domain/repositories/rural-producer.repository';
+import { IFarmRepository } from '@/farms/domain/repositories/farm.repository';
+import { IRuralProducerRepository } from '@/rural-producers/domain/repositories/rural-producer.repository';
 
 jest.mock('uuid', () => ({
   v4: jest.fn(),
@@ -30,6 +29,10 @@ describe('FarmService', () => {
           provide: FARM_REPOSITORY,
           useValue: {
             create: jest.fn(),
+            findAll: jest.fn(),
+            findById: jest.fn(),
+            update: jest.fn(),
+            softDelete: jest.fn(),
           },
         },
         {
@@ -151,6 +154,152 @@ describe('FarmService', () => {
       expect(ruralProducerRepository.checkExistsById).toHaveBeenCalledWith(
         farm.ruralProducerId
       );
+    });
+  });
+
+  describe('#list', () => {
+    it('should list all farms', async () => {
+      const farmModels = FarmFixture.createManyFarmsWithCrops(3);
+      const farmEntities = farmModels.map(FarmFixture.entity);
+
+      jest.spyOn(farmRepository, 'findAll').mockResolvedValue(farmEntities);
+
+      const result = await farmService.list();
+
+      expect(result).toHaveLength(3);
+      expect(result[0]).toEqual({
+        id: farmModels[0].id,
+        name: farmModels[0].name,
+        city: farmModels[0].city,
+        state: farmModels[0].state,
+        totalArea: farmModels[0].totalArea.toString(),
+        agricultureArea: farmModels[0].agricultureArea.toString(),
+        vegetationArea: farmModels[0].vegetationArea.toString(),
+        ruralProducerId: farmModels[0].ruralProducerId,
+        createdAt: farmModels[0].createdAt,
+        crops: farmModels[0].farmCropHarvests.map(farmCropHarvest => ({
+          cropId: farmCropHarvest.cropId,
+          name: farmCropHarvest.crop.name,
+          farmCropHarvestId: farmCropHarvest.id,
+          harvestId: farmCropHarvest.harvestId,
+          harvestDate: farmCropHarvest.harvestDate,
+          harvestYear: farmCropHarvest.harvest.year,
+          createdAt: farmCropHarvest.createdAt,
+          plantedArea: farmCropHarvest.plantedArea.toString(),
+        })),
+      });
+    });
+  });
+
+  describe('#findById', () => {
+    it('should find a farm by ID', async () => {
+      const farmModel = FarmFixture.createFarmWithCrops();
+      const farmEntity = FarmFixture.entity(farmModel);
+
+      jest.spyOn(farmRepository, 'findById').mockResolvedValue(farmEntity);
+
+      const result = await farmService.findById(farmModel.id);
+
+      expect(result).toEqual({
+        id: farmModel.id,
+        name: farmModel.name,
+        city: farmModel.city,
+        state: farmModel.state,
+        totalArea: farmModel.totalArea.toString(),
+        agricultureArea: farmModel.agricultureArea.toString(),
+        vegetationArea: farmModel.vegetationArea.toString(),
+        ruralProducerId: farmModel.ruralProducerId,
+        createdAt: farmModel.createdAt,
+        crops: farmModel.farmCropHarvests.map(farmCropHarvest => ({
+          cropId: farmCropHarvest.cropId,
+          farmCropHarvestId: farmCropHarvest.id,
+          harvestId: farmCropHarvest.harvestId,
+          name: farmCropHarvest.crop.name,
+          harvestDate: farmCropHarvest.harvestDate,
+          harvestYear: farmCropHarvest.harvest.year,
+          createdAt: farmCropHarvest.createdAt,
+          plantedArea: farmCropHarvest.plantedArea.toString(),
+        })),
+      });
+    });
+
+    it('should throw NotFoundException when farm does not exist', async () => {
+      const nonExistentId = 'non-existent-id';
+
+      jest.spyOn(farmRepository, 'findById').mockResolvedValue(null);
+
+      let error;
+
+      try {
+        await farmService.findById(nonExistentId);
+      } catch (err) {
+        error = err;
+      }
+
+      expect(error).toBeDefined();
+      expect(error.status).toBe(404);
+      expect(error).toBeInstanceOf(NotFoundException);
+      expect(error.message).toBe(`Farm with ID ${nonExistentId} not found.`);
+    });
+  });
+
+  describe('#update', () => {
+    it('should update a farm successfully', async () => {
+      const farmModel = FarmFixture.createFarm();
+      const farmEntity = FarmFixture.entity(farmModel);
+
+      const input = {
+        name: 'Updated Farm Name',
+        city: 'Updated City',
+        state: 'Updated State',
+        totalArea: 200,
+        ruralProducerId: farmModel.ruralProducerId,
+        vegetationArea: 50,
+        agricultureArea: 150,
+      };
+
+      jest
+        .spyOn(ruralProducerRepository, 'checkExistsById')
+        .mockResolvedValue(true);
+
+      jest.spyOn(farmRepository, 'findById').mockResolvedValue(farmEntity);
+
+      await farmService.update(farmModel.id, input);
+
+      expect(farmRepository.update).toHaveBeenCalledWith({
+        ...farmEntity,
+        name: input.name,
+        city: input.city,
+        state: input.state,
+      });
+    });
+
+    it('should throw NotFoundException when farm does not exist', async () => {
+      const nonExistentId = 'non-existent-id';
+      const input = {
+        name: 'Updated Farm Name',
+        city: 'Updated City',
+        state: 'Updated State',
+        totalArea: 200,
+        ruralProducerId: 'rural-producer-id',
+        vegetationArea: 50,
+        agricultureArea: 150,
+      };
+
+      jest.spyOn(farmRepository, 'findById').mockResolvedValue(null);
+
+      let error;
+
+      try {
+        await farmService.update(nonExistentId, input);
+      } catch (err) {
+        error = err;
+      }
+
+      expect(error).toBeDefined();
+      expect(error.status).toBe(404);
+      expect(error).toBeInstanceOf(NotFoundException);
+      expect(error.message).toBe(`Farm with ID ${nonExistentId} not found.`);
     });
   });
 });

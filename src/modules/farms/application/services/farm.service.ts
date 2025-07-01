@@ -12,17 +12,14 @@ import {
   CreateFarmInput,
   CreateFarmOutput,
 } from '@/farms/application/dtos/create-farm.dto';
-import {
-  CROP_REPOSITORY,
-  FARM_REPOSITORY,
-  RURAL_PRODUCER_REPOSITORY,
-} from '@/shared/tokens';
-import { Farm } from '../../domain/entities/farm.entity';
+import { Farm } from '@/farms/domain/entities/farm.entity';
+import { FarmMapper } from '@/farms/application/mappers/farm.mapper';
 import { ListFarmsOutput } from '@/farms/application/dtos/list-farms.dto';
+import { UpdateFarmInput } from '@/farms/application/dtos/update-farm.dto';
+import { FARM_REPOSITORY, RURAL_PRODUCER_REPOSITORY } from '@/shared/tokens';
 import { IFarmRepository } from '@/farms/domain/repositories/farm.repository';
-import { ICropRepository } from '@/farms/domain/repositories/crop.repository';
 import { InvalidDocumentException } from '@/farms/domain/exceptions/invalid-farm-area.exception';
-import { IRuralProducerRepository } from '@/modules/rural-producers/domain/repositories/rural-producer.repository';
+import { IRuralProducerRepository } from '@/rural-producers/domain/repositories/rural-producer.repository';
 
 @Injectable()
 export class FarmService {
@@ -96,16 +93,43 @@ export class FarmService {
   async list(): Promise<ListFarmsOutput[]> {
     const farms = await this.farmRepository.findAll();
 
-    return farms.map(farm => ({
-      id: farm.id,
-      name: farm.name,
-      totalArea: farm.totalArea.toString(),
-      agricultureArea: farm.agricultureArea.toString(),
-      vegetationArea: farm.vegetationArea.toString(),
-      state: farm.state,
-      city: farm.city,
-      ruralProducerId: farm.ruralProducerId,
-      createdAt: farm.createdAt,
-    }));
+    return farms.map(farm => FarmMapper.entityToOutput(farm));
+  }
+
+  async findById(id: string): Promise<ListFarmsOutput> {
+    const farm = await this.farmRepository.findById(id);
+
+    if (!farm) {
+      throw new NotFoundException(`Farm with ID ${id} not found.`);
+    }
+
+    return FarmMapper.entityToOutput(farm);
+  }
+
+  async update(farmId: string, input: UpdateFarmInput): Promise<void> {
+    const farm = await this.farmRepository.findById(farmId);
+
+    if (!farm) {
+      throw new NotFoundException(`Farm with ID ${farmId} not found.`);
+    }
+
+    const { name, city, state, ruralProducerId } = input;
+
+    farm.name = name || farm.name;
+    farm.city = city || farm.city;
+    farm.state = state || farm.state;
+    farm.ruralProducerId = ruralProducerId || farm.ruralProducerId;
+
+    await this.farmRepository.update(farm);
+  }
+
+  async delete(id: string): Promise<void> {
+    const farm = await this.farmRepository.findById(id);
+
+    if (!farm) {
+      throw new NotFoundException(`Farm with ID ${id} not found.`);
+    }
+
+    await this.farmRepository.softDelete(farm.id);
   }
 }

@@ -5,6 +5,7 @@ import {
   Injectable,
   BadRequestException,
   ConflictException,
+  NotFoundException,
 } from '@nestjs/common';
 
 import {
@@ -14,6 +15,7 @@ import {
 import { RURAL_PRODUCER_REPOSITORY } from '@/shared/tokens';
 import { RuralProducer } from '@/rural-producers/domain/entities/rural-producer.entity';
 import { ListRuralProducerOutput } from '@/rural-producers/application/dtos/list-rural-producer.dto';
+import { UpdateRuralProducerInput } from '@/rural-producers/application/dtos/update-rural-producer.dto';
 import { IRuralProducerRepository } from '@/rural-producers/domain/repositories/rural-producer.repository';
 import { InvalidDocumentException } from '@/rural-producers/domain/execeptions/invalid-document.exception';
 
@@ -83,5 +85,45 @@ export class RuralProducerService {
       document: ruralProducer.document.getValue(),
       createdAt: ruralProducer.createdAt,
     }));
+  }
+
+  async findById(id: string): Promise<ListRuralProducerOutput> {
+    const ruralProducer = await this.ruralProducerRepository.findById(id);
+
+    if (!ruralProducer) {
+      this.logger.warn(`Rural producer with id ${id} not found.`);
+      throw new NotFoundException('Rural producer not found');
+    }
+
+    return {
+      id: ruralProducer.id,
+      name: ruralProducer.name,
+      document: ruralProducer.document.getValue(),
+      createdAt: ruralProducer.createdAt,
+    };
+  }
+
+  async update(id: string, input: UpdateRuralProducerInput): Promise<void> {
+    const ruralProducer = await this.ruralProducerRepository.findById(id);
+
+    if (!ruralProducer) {
+      this.logger.warn(`Rural producer with id ${id} not found.`);
+      throw new NotFoundException('Rural producer not found');
+    }
+
+    ruralProducer.name = input.name;
+
+    await this.ruralProducerRepository.update(ruralProducer);
+  }
+
+  async delete(id: string): Promise<void> {
+    const ruralProducer = await this.ruralProducerRepository.findById(id);
+
+    if (!ruralProducer) {
+      this.logger.warn(`Rural producer with id ${id} not found.`);
+      throw new NotFoundException('Rural producer not found');
+    }
+
+    await this.ruralProducerRepository.softDelete(ruralProducer.id);
   }
 }

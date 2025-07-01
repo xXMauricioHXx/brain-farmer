@@ -1,14 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
-import { Harvest } from '@/harvests/domain/entities/harvest.entity';
-import { ListHarvestsOutput } from '@/harvests/application/dtos/list-harvests.dto';
 import {
   CreateHarvestInput,
   CreateHarvestOutput,
 } from '@/harvests/application/dtos/create-harvest.dto';
-import { IHarvestRepository } from '@/modules/harvests/domain/repositories/harvest.repository';
 import { HARVEST_REPOSITORY } from '@/shared/tokens';
+import { Harvest } from '@/harvests/domain/entities/harvest.entity';
+import { ListHarvestsOutput } from '@/harvests/application/dtos/list-harvests.dto';
+import { IHarvestRepository } from '@/harvests/domain/repositories/harvest.repository';
 
 @Injectable()
 export class HarvestService {
@@ -28,5 +28,37 @@ export class HarvestService {
 
   async list(): Promise<ListHarvestsOutput[]> {
     return this.harvestRepository.findAll();
+  }
+
+  async findById(id: string): Promise<ListHarvestsOutput> {
+    const harvest = await this.harvestRepository.findById(id);
+
+    if (!harvest) {
+      throw new NotFoundException(`Harvest with id ${id} not found`);
+    }
+
+    return harvest;
+  }
+
+  async update(id: string, input: CreateHarvestInput): Promise<void> {
+    const harvest = await this.harvestRepository.findById(id);
+
+    if (!harvest) {
+      throw new NotFoundException(`Harvest with id ${id} not found`);
+    }
+
+    harvest.year = input.year;
+
+    return this.harvestRepository.update(harvest);
+  }
+
+  async delete(id: string): Promise<void> {
+    const harvest = await this.harvestRepository.findById(id);
+
+    if (!harvest) {
+      throw new NotFoundException(`Harvest with id ${id} not found`);
+    }
+
+    return this.harvestRepository.softDelete(id);
   }
 }

@@ -32,7 +32,7 @@ export class FarmCropHarvestModel {
   plantedArea: string;
 
   @Column({ name: 'harvest_date', type: 'date' })
-  harvestDate: Date;
+  harvestDate: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

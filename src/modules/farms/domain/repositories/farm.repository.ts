@@ -1,9 +1,13 @@
-import { Crop } from '../entities/crop.entity';
-import { Farm } from '../entities/farm.entity';
+import { FarmCropHarvest } from '@/farms/domain/entities/farm-crop-harvest.entity';
+import { Farm } from '@/farms/domain/entities/farm.entity';
 
 export interface IFarmRepository {
-  create(farm: Farm): Promise<Farm>;
   findAll(): Promise<Farm[]>;
+  create(farm: Farm): Promise<Farm>;
+  update(farm: Farm): Promise<void>;
+  softDelete(id: string): Promise<void>;
   findById(id: string): Promise<Farm | null>;
-  assignCropsToFarm(farm: Farm, crops: Crop[]): Promise<Farm>;
+  assignCropsToFarm(farm: Farm, crops: FarmCropHarvest[]): Promise<Farm>;
+  deleteFarmCropHarvest(farmCropHarvestId): Promise<void>;
+  findFarmCropHarvestById(id: string): Promise<FarmCropHarvest | null>;
 }

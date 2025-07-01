@@ -1,15 +1,25 @@
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RuralProducerRepository } from '@/modules/rural-producers/infrastructure/repositories/rural-producer.repository';
+
 import { RuralProducerModel } from '@/database/models/rural-producer.model';
 import { RuralProducerFixture } from '../../../fixtures/rural-producer.fixture';
+import { FarmCropHarvestModel } from '@/database/models/farm-crop-harvest.model';
+import { RuralProducerRepository } from '@/rural-producers/infrastructure/repositories/rural-producer.repository';
+import { FarmModel } from '@/database/models/farm.model';
 
 describe('RuralProducerRepository', () => {
   let ruralProducerRepository: RuralProducerRepository;
   let repository: jest.Mocked<Repository<RuralProducerModel>>;
+  let entityManager: jest.Mocked<Repository<FarmCropHarvestModel>>;
 
   beforeEach(async () => {
+    entityManager = {
+      transaction: jest.fn(),
+      softDelete: jest.fn(),
+      find: jest.fn(),
+    } as unknown as jest.Mocked<Repository<FarmCropHarvestModel>>;
+
     const module = await Test.createTestingModule({
       providers: [
         RuralProducerRepository,
@@ -21,6 +31,18 @@ describe('RuralProducerRepository', () => {
             find: jest.fn(),
             exists: jest.fn(),
             findOne: jest.fn(),
+            update: jest.fn(),
+            softDelete: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(FarmCropHarvestModel),
+          useValue: {
+            manager: {
+              transaction: jest
+                .fn()
+                .mockImplementation(cb => cb(entityManager)),
+            },
           },
         },
       ],
@@ -60,6 +82,7 @@ describe('RuralProducerRepository', () => {
 
       expect(repository.find).toHaveBeenCalledWith({
         where: { deletedAt: null },
+        order: { createdAt: 'DESC' },
       });
       expect(result).toHaveLength(2);
       expect(result).toEqual(
@@ -124,6 +147,68 @@ describe('RuralProducerRepository', () => {
       expect(repository.exists).toHaveBeenCalledWith({
         where: { id, deletedAt: null },
       });
+    });
+  });
+
+  describe('#findById', () => {
+    it('should return a rural producer by id', async () => {
+      const ruralProducer = RuralProducerFixture.createRuralProducer();
+      const ruralProducerEntity = RuralProducerFixture.entity(ruralProducer);
+
+      jest.spyOn(repository, 'findOne').mockResolvedValue(ruralProducer);
+
+      const result = await ruralProducerRepository.findById(ruralProducer.id);
+
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: { id: ruralProducer.id, deletedAt: null },
+      });
+      expect(result).toEqual(ruralProducerEntity);
+    });
+
+    it('should return null if no rural producer is found', async () => {
+      const id = '00000000-0000-0000-0000-000000000000';
+      repository.findOne.mockResolvedValue(null);
+
+      const result = await ruralProducerRepository.findById(id);
+
+      expect(result).toBeNull();
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: { id, deletedAt: null },
+      });
+    });
+  });
+
+  describe('#update', () => {
+    it('should update and return a rural producer', async () => {
+      const ruralProducer = RuralProducerFixture.createRuralProducer();
+      const ruralProducerEntity = RuralProducerFixture.entity(ruralProducer);
+
+      jest.spyOn(repository, 'findOne').mockResolvedValue(ruralProducer);
+
+      const result = await ruralProducerRepository.update(ruralProducerEntity);
+
+      expect(repository.update).toHaveBeenCalledWith(ruralProducer.id, {
+        name: ruralProducerEntity.name,
+      });
+
+      expect(result).toEqual(ruralProducerEntity);
+    });
+  });
+
+  describe('#softDelete', () => {
+    it('should soft delete a rural producer and its farms', async () => {
+      const ruralProducer = RuralProducerFixture.createRuralProducer();
+      jest.spyOn(entityManager, 'find').mockResolvedValue([]);
+
+      await ruralProducerRepository.softDelete(ruralProducer.id);
+
+      expect(entityManager.find).toHaveBeenCalledWith(FarmModel, {
+        where: { ruralProducerId: ruralProducer.id, deletedAt: null },
+      });
+      expect(entityManager.softDelete).toHaveBeenCalledWith(
+        RuralProducerModel,
+        { id: ruralProducer.id }
+      );
     });
   });
 });

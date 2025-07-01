@@ -4,10 +4,10 @@ import { HarvestModel } from '@/database/models/harvest.model';
 import { Harvest } from '@/harvests/domain/entities/harvest.entity';
 
 export class HarvestFixture {
-  public static createHarvest(): HarvestModel {
+  public static createHarvest(id?: string, year?: number): HarvestModel {
     const harvestModel = new HarvestModel();
-    harvestModel.id = faker.string.uuid();
-    harvestModel.year = faker.number.int({ min: 2020, max: 2025 });
+    harvestModel.id = id || faker.string.uuid();
+    harvestModel.year = year || faker.number.int({ min: 2020, max: 2025 });
     harvestModel.createdAt = faker.date.past();
 
     return harvestModel;

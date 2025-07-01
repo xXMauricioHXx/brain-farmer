@@ -7,6 +7,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ListFarmsOutput } from './list-farms.dto';
 
 export class CropToFarmInput {
   @IsUUID()
@@ -20,7 +21,7 @@ export class CropToFarmInput {
   plantedArea: number;
 
   @IsDateString()
-  harvestDate: Date;
+  harvestDate: string;
 }
 
 export class AddCropsToFarmInput {
@@ -30,20 +31,4 @@ export class AddCropsToFarmInput {
   crops: CropToFarmInput[];
 }
 
-export type AddCropsToFarmOutput = {
-  id: string;
-  name: string;
-  totalArea: string;
-  agricultureArea: string;
-  vegetationArea: string;
-  state: string;
-  city: string;
-  ruralProducerId: string;
-  createdAt: Date;
-  crops: {
-    id: string;
-    plantedArea: string;
-    harvestDate: Date;
-    createdAt: Date;
-  }[];
-};
+export type AddCropsToFarmOutput = ListFarmsOutput;

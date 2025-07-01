@@ -5,10 +5,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { FarmModel } from '@/database/models/farm.model';
 import { Farm } from '@/farms/domain/entities/farm.entity';
-import { Crop } from '@/farms/domain/entities/crop.entity';
-import { Harvest } from '@/farms/domain/entities/harvest.entity';
 import { IFarmRepository } from '@/farms/domain/repositories/farm.repository';
 import { FarmCropHarvestModel } from '@/database/models/farm-crop-harvest.model';
+import { FarmCropHarvest } from '@/farms/domain/entities/farm-crop-harvest.entity';
 
 export class FarmRepository implements IFarmRepository {
   constructor(
@@ -20,72 +19,66 @@ export class FarmRepository implements IFarmRepository {
 
   public async create(farm: Farm): Promise<Farm> {
     const createdFarm = this.repository.create({
-      ...farm,
-      agricultureArea: farm.agricultureArea.toString(),
+      id: farm.id,
+      name: farm.name,
+      city: farm.city,
+      state: farm.state,
+      ruralProducerId: farm.ruralProducerId,
       totalArea: farm.totalArea.toString(),
       vegetationArea: farm.vegetationArea.toString(),
+      agricultureArea: farm.agricultureArea.toString(),
     });
 
     const newFarm = await this.repository.save(createdFarm);
 
-    return Farm.instance({
-      id: newFarm.id,
-      city: newFarm.city,
-      name: newFarm.name,
-      state: newFarm.state,
-      createdAt: newFarm.createdAt,
-      ruralProducerId: newFarm.ruralProducerId,
-      totalArea: new Decimal(newFarm.totalArea),
-      vegetationArea: new Decimal(newFarm.vegetationArea),
-      agricultureArea: new Decimal(newFarm.agricultureArea),
-    });
+    return this.mapFarmModelToEntity(newFarm);
   }
 
   public async findAll(): Promise<Farm[]> {
     const farms = await this.repository.find({
       where: { deletedAt: null },
       order: { createdAt: 'DESC' },
+      relations: [
+        'farmCropHarvests',
+        'farmCropHarvests.crop',
+        'farmCropHarvests.harvest',
+      ],
     });
 
-    return farms.map(farm =>
-      Farm.instance({
-        id: farm.id,
-        city: farm.city,
-        name: farm.name,
-        state: farm.state,
-        createdAt: farm.createdAt,
-        ruralProducerId: farm.ruralProducerId,
-        totalArea: new Decimal(farm.totalArea),
-        vegetationArea: new Decimal(farm.vegetationArea),
-        agricultureArea: new Decimal(farm.agricultureArea),
-      })
-    );
+    return farms.map(this.mapFarmModelToEntity);
   }
 
-  public async assignCropsToFarm(farm: Farm, crops: Crop[]): Promise<Farm> {
-    const cropHarvests = crops.map(crop => {
+  public async assignCropsToFarm(
+    farm: Farm,
+    farmCropHarvests: FarmCropHarvest[]
+  ): Promise<Farm> {
+    const cropHarvestsModel = farmCropHarvests.map(farmCropHarvest => {
       return this.farmCropHarvestRepository.create({
         id: uuidv4(),
         farmId: farm.id,
-        cropId: crop.id,
-        harvestId: crop.harvest.id,
-        harvestDate: crop.harvestDate,
-        plantedArea: crop.plantedArea.toString(),
+        cropId: farmCropHarvest.cropId,
+        harvestId: farmCropHarvest.harvestId,
+        harvestDate: farmCropHarvest.harvestDate,
+        plantedArea: farmCropHarvest.plantedArea.toString(),
       });
     });
 
-    await this.farmCropHarvestRepository.save(cropHarvests);
+    await this.farmCropHarvestRepository.save(cropHarvestsModel);
 
     return Farm.instance({
       ...farm,
-      crops: [farm.crops, ...crops].flat(),
+      farmCropHarvests: [farm.farmCropHarvests, ...farmCropHarvests].flat(),
     });
   }
 
   public async findById(id: string): Promise<Farm | null> {
     const farm = await this.repository.findOne({
       where: { id, deletedAt: null },
-      relations: ['farmCropHarvests', 'farmCropHarvests.harvest'],
+      relations: [
+        'farmCropHarvests',
+        'farmCropHarvests.crop',
+        'farmCropHarvests.harvest',
+      ],
       order: { createdAt: 'DESC' },
     });
 
@@ -93,6 +86,28 @@ export class FarmRepository implements IFarmRepository {
       return null;
     }
 
+    return this.mapFarmModelToEntity(farm);
+  }
+
+  public async softDelete(id: string): Promise<void> {
+    await this.farmCropHarvestRepository.manager.transaction(
+      async transaction => {
+        await transaction.softDelete(FarmCropHarvestModel, { farmId: id });
+        await transaction.softDelete(FarmModel, id);
+      }
+    );
+  }
+
+  public async update(farm: Farm): Promise<void> {
+    await this.repository.update(farm.id, {
+      name: farm.name,
+      city: farm.city,
+      state: farm.state,
+      ruralProducerId: farm.ruralProducerId,
+    });
+  }
+
+  private mapFarmModelToEntity(farm: FarmModel): Farm {
     return Farm.instance({
       id: farm.id,
       city: farm.city,
@@ -103,19 +118,47 @@ export class FarmRepository implements IFarmRepository {
       totalArea: new Decimal(farm.totalArea),
       vegetationArea: new Decimal(farm.vegetationArea),
       agricultureArea: new Decimal(farm.agricultureArea),
-      crops: farm.farmCropHarvests.map(farmCropHarvest => {
-        return Crop.instance({
-          id: farmCropHarvest.cropId,
-          harvestDate: farmCropHarvest.harvestDate,
-          plantedArea: new Decimal(farmCropHarvest.plantedArea),
-          harvest: Harvest.instance({
-            id: farmCropHarvest.harvest.id,
-            year: farmCropHarvest.harvest.year,
-            createdAt: farmCropHarvest.harvest.createdAt,
-          }),
-          createdAt: farmCropHarvest.createdAt,
-        });
-      }),
+      farmCropHarvests:
+        farm.farmCropHarvests?.map(farmCropHarvest => {
+          return FarmCropHarvest.instance({
+            cropId: farmCropHarvest.cropId,
+            farmId: farmCropHarvest.farmId,
+            name: farmCropHarvest.crop.name,
+            farmCropHarvestId: farmCropHarvest.id,
+            harvestId: farmCropHarvest.harvestId,
+            createdAt: farmCropHarvest.createdAt,
+            harvestDate: farmCropHarvest.harvestDate,
+            harvestYear: farmCropHarvest.harvest.year,
+            plantedArea: new Decimal(farmCropHarvest.plantedArea),
+          });
+        }) || [],
+    });
+  }
+
+  async deleteFarmCropHarvest(farmCropHarvestId: any): Promise<void> {
+    await this.farmCropHarvestRepository.softDelete(farmCropHarvestId);
+  }
+
+  async findFarmCropHarvestById(id: string): Promise<FarmCropHarvest | null> {
+    const farmCropHarvest = await this.farmCropHarvestRepository.findOne({
+      where: { id, deletedAt: null },
+      relations: ['crop', 'harvest'],
+    });
+
+    if (!farmCropHarvest) {
+      return null;
+    }
+
+    return FarmCropHarvest.instance({
+      cropId: farmCropHarvest.cropId,
+      farmId: farmCropHarvest.farmId,
+      name: farmCropHarvest.crop.name,
+      createdAt: farmCropHarvest.createdAt,
+      harvestId: farmCropHarvest.harvestId,
+      farmCropHarvestId: farmCropHarvest.id,
+      harvestDate: farmCropHarvest.harvestDate,
+      harvestYear: farmCropHarvest.harvest.year,
+      plantedArea: new Decimal(farmCropHarvest.plantedArea),
     });
   }
 }

@@ -1,5 +1,5 @@
-import { Document } from '@/modules/rural-producers/domain/value-objects/document.vo';
-import { InvalidDocumentException } from '@/modules/rural-producers/domain/execeptions/invalid-document.exception';
+import { Document } from '@/rural-producers/domain/value-objects/document.vo';
+import { InvalidDocumentException } from '@/rural-producers/domain/execeptions/invalid-document.exception';
 
 describe('Document', () => {
   it('should create a valid CPF document', () => {

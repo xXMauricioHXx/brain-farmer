@@ -1,15 +1,12 @@
 import { faker } from '@faker-js/faker';
 import { Decimal } from 'decimal.js';
+
 import { FarmModel } from '@/database/models/farm.model';
-import {
-  Farm,
-  FarmAttributes,
-} from '@/modules/farms/domain/entities/farm.entity';
-import { FarmCropHarvestModel } from '@/database/models/farm-crop-harvest.model';
-import { HarvestModel } from '@/database/models/harvest.model';
-import { Harvest } from '@/farms/domain/entities/harvest.entity';
 import { CropModel } from '@/database/models/crop.model';
-import { Crop } from '@/farms/domain/entities/crop.entity';
+import { Farm } from '@/farms/domain/entities/farm.entity';
+import { HarvestModel } from '@/database/models/harvest.model';
+import { FarmCropHarvestModel } from '@/database/models/farm-crop-harvest.model';
+import { FarmCropHarvest } from '@/farms/domain/entities/farm-crop-harvest.entity';
 
 export class FarmFixture {
   public static createFarm(ruralProducerId?: string): FarmModel {
@@ -46,7 +43,7 @@ export class FarmFixture {
   public static createFarmWithCrops(farmCropHarvestLength?: number): FarmModel {
     const farmId = faker.string.uuid();
     const totalArea = faker.number.float({
-      min: 10,
+      min: 100,
       max: 1000,
     });
     const agricultureArea = faker.number.float({
@@ -69,9 +66,9 @@ export class FarmFixture {
         farmCropHarvestModel.cropId = faker.string.uuid();
         farmCropHarvestModel.harvestId = harvestId;
         farmCropHarvestModel.plantedArea = faker.number
-          .int({ min: 1, max: 1000 })
+          .int({ min: 1, max: agricultureArea / 2 })
           .toString();
-        farmCropHarvestModel.harvestDate = new Date('2023-10-01');
+        farmCropHarvestModel.harvestDate = '2023-10-01';
         farmCropHarvestModel.createdAt = new Date();
         farmCropHarvestModel.harvest = new HarvestModel();
         farmCropHarvestModel.harvest.id = harvestId;
@@ -80,6 +77,10 @@ export class FarmFixture {
           max: 2040,
         });
         farmCropHarvestModel.harvest.createdAt = new Date();
+        farmCropHarvestModel.crop = new CropModel();
+        farmCropHarvestModel.crop.id = farmCropHarvestModel.cropId;
+        farmCropHarvestModel.crop.name = faker.commerce.productName();
+        farmCropHarvestModel.crop.createdAt = new Date();
 
         return farmCropHarvestModel;
       }
@@ -102,12 +103,24 @@ export class FarmFixture {
     return farm;
   }
 
-  public static entity(data: FarmModel): Farm {
+  public static entity(farm: FarmModel): Farm {
     return Farm.instance({
-      ...data,
-      totalArea: new Decimal(data.totalArea),
-      agricultureArea: new Decimal(data.agricultureArea),
-      vegetationArea: new Decimal(data.vegetationArea),
+      ...farm,
+      totalArea: new Decimal(farm.totalArea),
+      agricultureArea: new Decimal(farm.agricultureArea),
+      vegetationArea: new Decimal(farm.vegetationArea),
+      farmCropHarvests: farm.farmCropHarvests.map(farmCropHarvest => {
+        return FarmCropHarvest.instance({
+          cropId: farmCropHarvest.cropId,
+          name: farmCropHarvest.crop.name,
+          harvestDate: farmCropHarvest.harvestDate,
+          plantedArea: new Decimal(farmCropHarvest.plantedArea),
+          harvestId: farmCropHarvest.harvestId,
+          harvestYear: farmCropHarvest.harvest.year,
+          farmCropHarvestId: farmCropHarvest.id,
+          createdAt: farmCropHarvest.createdAt,
+        });
+      }),
     });
   }
 
@@ -118,21 +131,23 @@ export class FarmFixture {
     return Array.from({ length: count }, () => this.createFarm(producerId));
   }
 
-  public static harvestEntity(harvestModel: HarvestModel) {
-    return Harvest.instance({
-      id: harvestModel.id,
-      year: harvestModel.year,
-      createdAt: harvestModel.createdAt,
-    });
+  public static createManyFarmsWithCrops(count: number): FarmModel[] {
+    return Array.from({ length: count }, () => this.createFarmWithCrops());
   }
 
-  public static cropEntity(farmCropHarvestModel: FarmCropHarvestModel): Crop {
-    return Crop.instance({
-      id: farmCropHarvestModel.id,
+  public static farmCropHarvestEntity(
+    farmCropHarvestModel: FarmCropHarvestModel
+  ): FarmCropHarvest {
+    return FarmCropHarvest.instance({
+      cropId: farmCropHarvestModel.cropId,
+      name: farmCropHarvestModel.crop.name,
+      harvestId: farmCropHarvestModel.harvestId,
       harvestDate: farmCropHarvestModel.harvestDate,
       plantedArea: new Decimal(farmCropHarvestModel.plantedArea),
-      harvest: this.harvestEntity(farmCropHarvestModel.harvest),
+      harvestYear: farmCropHarvestModel.harvest.year,
+      farmCropHarvestId: farmCropHarvestModel.id,
       createdAt: farmCropHarvestModel.createdAt,
+      farmId: farmCropHarvestModel.farmId,
     });
   }
 }

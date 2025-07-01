@@ -1,8 +1,8 @@
 import { Decimal } from 'decimal.js';
 import { IsUUID, IsString, IsInstance, IsOptional } from 'class-validator';
 
-import { Crop } from '@/farms/domain/entities/crop.entity';
 import { BaseEntity } from '@/shared/contracts/base-entity';
+import { FarmCropHarvest } from '@/farms/domain/entities/farm-crop-harvest.entity';
 import { InvalidDocumentException } from '@/farms/domain/exceptions/invalid-farm-area.exception';
 import { PlantedAreaExceedsLimitException } from '@/farms/domain/exceptions/planted-area-exceeds-limit.exception';
 
@@ -11,7 +11,7 @@ export type FarmAttributes = {
   city: string;
   name: string;
   state: string;
-  crops?: Crop[];
+  farmCropHarvests?: FarmCropHarvest[];
   createdAt?: Date;
   totalArea: Decimal;
   vegetationArea: Decimal;
@@ -49,7 +49,7 @@ export class Farm extends BaseEntity {
   createdAt?: Date;
 
   @IsOptional()
-  crops?: Crop[];
+  farmCropHarvests?: FarmCropHarvest[];
 
   private constructor(input: FarmAttributes) {
     super();
@@ -63,7 +63,7 @@ export class Farm extends BaseEntity {
     this.vegetationArea = input.vegetationArea;
     this.ruralProducerId = input.ruralProducerId;
     this.agricultureArea = input.agricultureArea;
-    this.crops = input.crops || [];
+    this.farmCropHarvests = input.farmCropHarvests || [];
 
     this.validateAreas();
   }
@@ -85,8 +85,8 @@ export class Farm extends BaseEntity {
     }
   }
 
-  public validatePlantedAreaLimit(crop: Crop): void {
-    const currentPlantedArea = this.crops.reduce(
+  public validatePlantedAreaLimit(crop: FarmCropHarvest): void {
+    const currentPlantedArea = this.farmCropHarvests.reduce(
       (acc, crop) => acc.plus(crop.plantedArea),
       new Decimal(0)
     );

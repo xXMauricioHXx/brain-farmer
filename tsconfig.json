@@ -18,8 +18,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "paths": {
-      "@/modules": ["src/modules/*"],
+    "paths": {      
       "@/crops/*": ["src/modules/crops/*"],
       "@/farms/*": ["src/modules/farms/*"],
       "@/rural-producers/*": ["src/modules/rural-producers/*"],

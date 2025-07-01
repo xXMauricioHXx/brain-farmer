@@ -1,10 +1,8 @@
-import { faker } from '@faker-js/faker/.';
-import { RuralProducerModel } from '@/database/models/rural-producer.model';
 import { cpf } from 'cpf-cnpj-validator';
-import {
-  RuralProducer,
-  RuralProducerAttributes,
-} from '@/modules/rural-producers/domain/entities/rural-producer.entity';
+import { faker } from '@faker-js/faker/.';
+
+import { RuralProducerModel } from '@/database/models/rural-producer.model';
+import { RuralProducer } from '@/rural-producers/domain/entities/rural-producer.entity';
 
 export class RuralProducerFixture {
   public static createRuralProducer(): RuralProducerModel {
@@ -21,7 +19,7 @@ export class RuralProducerFixture {
     return ruralProducer;
   }
 
-  public static entity(data: RuralProducerAttributes): RuralProducer {
+  public static entity(data: RuralProducerModel): RuralProducer {
     return RuralProducer.instance(data);
   }
 

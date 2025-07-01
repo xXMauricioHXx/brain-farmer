@@ -1,17 +1,18 @@
-import { Test } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import Decimal from 'decimal.js';
 import { v4 as uuidv4 } from 'uuid';
+import { Repository } from 'typeorm';
+import { Test } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
 
-import { FarmRepository } from '@/modules/farms/infrastructure/repositories/farm.repository';
 import { FarmModel } from '@/database/models/farm.model';
-import { FarmCropHarvestModel } from '@/database/models/farm-crop-harvest.model';
+import { Farm } from '@/farms/domain/entities/farm.entity';
 import { FarmFixture } from '../../../fixtures/farm.fixture';
-import { Farm } from '@/modules/farms/domain/entities/farm.entity';
-import { Crop } from '@/modules/farms/domain/entities/crop.entity';
-import { Harvest } from '@/modules/farms/domain/entities/harvest.entity';
+import { CropFixture } from '../../../fixtures/crop.fixture';
+import { HarvestFixture } from '../../../fixtures/harvest.fixture';
+import { FarmCropHarvestModel } from '@/database/models/farm-crop-harvest.model';
+import { FarmCropHarvest } from '@/farms/domain/entities/farm-crop-harvest.entity';
 import { FarmCropHarvestFixture } from '../../../fixtures/farm-crop-harvest.fixture';
+import { FarmRepository } from '@/farms/infrastructure/repositories/farm.repository';
 
 jest.mock('uuid', () => ({
   v4: jest.fn(),
@@ -21,8 +22,14 @@ describe('FarmRepository', () => {
   let farmRepository: FarmRepository;
   let repository: jest.Mocked<Repository<FarmModel>>;
   let farmCropHarvestRepository: jest.Mocked<Repository<FarmCropHarvestModel>>;
+  let entityManager: jest.Mocked<Repository<FarmCropHarvestModel>>;
 
   beforeEach(async () => {
+    entityManager = {
+      transaction: jest.fn(),
+      softDelete: jest.fn(),
+    } as unknown as jest.Mocked<Repository<FarmCropHarvestModel>>;
+
     const module = await Test.createTestingModule({
       providers: [
         FarmRepository,
@@ -33,6 +40,8 @@ describe('FarmRepository', () => {
             save: jest.fn(),
             find: jest.fn(),
             findOne: jest.fn(),
+            update: jest.fn(),
+            softDelete: jest.fn(),
           },
         },
         {
@@ -40,6 +49,11 @@ describe('FarmRepository', () => {
           useValue: {
             create: jest.fn(),
             save: jest.fn(),
+            manager: {
+              transaction: jest
+                .fn()
+                .mockImplementation(cb => cb(entityManager)),
+            },
           },
         },
       ],
@@ -63,10 +77,14 @@ describe('FarmRepository', () => {
       const result = await farmRepository.create(farmEntity);
 
       expect(repository.create).toHaveBeenCalledWith({
-        ...farmEntity,
-        agricultureArea: farmEntity.agricultureArea.toString(),
+        id: farmEntity.id,
+        name: farmEntity.name,
+        city: farmEntity.city,
+        state: farmEntity.state,
+        ruralProducerId: farmEntity.ruralProducerId,
         totalArea: farmEntity.totalArea.toString(),
         vegetationArea: farmEntity.vegetationArea.toString(),
+        agricultureArea: farmEntity.agricultureArea.toString(),
       });
 
       expect(result).toEqual(farmEntity);
@@ -85,6 +103,11 @@ describe('FarmRepository', () => {
       expect(repository.find).toHaveBeenCalledWith({
         where: { deletedAt: null },
         order: { createdAt: 'DESC' },
+        relations: [
+          'farmCropHarvests',
+          'farmCropHarvests.crop',
+          'farmCropHarvests.harvest',
+        ],
       });
 
       expect(result).toHaveLength(2);
@@ -95,32 +118,45 @@ describe('FarmRepository', () => {
   describe('#assignCropsToFarm', () => {
     it('should associate crops to a farm', async () => {
       const farmModel = FarmFixture.createFarmWithCrops();
-      const farmEntity = FarmFixture.entity(farmModel);
+      const cropModel = CropFixture.createCrop(
+        farmModel.farmCropHarvests[0].cropId
+      );
+      const harvestModel = HarvestFixture.createHarvest(
+        farmModel.farmCropHarvests[0].harvestId,
+        farmModel.farmCropHarvests[0].harvest.year
+      );
 
-      const crop = FarmFixture.cropEntity(farmModel.farmCropHarvests[0]);
+      const farmEntity = FarmFixture.entity(farmModel);
+      const harvestEntity = HarvestFixture.entity(harvestModel);
+      const cropEntity = CropFixture.entity(cropModel);
 
       const fakeUUID = 'generated-uuid';
       (uuidv4 as jest.Mock).mockReturnValue(fakeUUID);
 
       const farmCropHarvestModel = FarmCropHarvestFixture.createFarmCropHarvest(
-        crop.id,
+        cropEntity.id,
         farmEntity.id,
-        crop.harvest.id
+        harvestEntity.id
       );
+
+      const farmCropHarvestEntity =
+        FarmCropHarvestFixture.entity(farmCropHarvestModel);
 
       jest
         .spyOn(farmCropHarvestRepository, 'create')
         .mockReturnValue(farmCropHarvestModel);
 
-      const result = await farmRepository.assignCropsToFarm(farmEntity, [crop]);
+      const result = await farmRepository.assignCropsToFarm(farmEntity, [
+        farmCropHarvestEntity,
+      ]);
 
       expect(farmCropHarvestRepository.create).toHaveBeenCalledWith({
         id: fakeUUID,
         farmId: farmEntity.id,
-        cropId: crop.id,
-        harvestId: crop.harvest.id,
-        harvestDate: crop.harvestDate,
-        plantedArea: crop.plantedArea.toString(),
+        cropId: farmCropHarvestEntity.cropId,
+        harvestId: farmCropHarvestEntity.harvestId,
+        harvestDate: farmCropHarvestEntity.harvestDate,
+        plantedArea: farmCropHarvestEntity.plantedArea.toString(),
       });
 
       expect(farmCropHarvestRepository.save).toHaveBeenCalledWith([
@@ -129,7 +165,10 @@ describe('FarmRepository', () => {
       expect(result).toEqual(
         Farm.instance({
           ...farmEntity,
-          crops: [...farmEntity.crops, crop],
+          farmCropHarvests: [
+            ...farmEntity.farmCropHarvests,
+            farmCropHarvestEntity,
+          ],
         })
       );
     });
@@ -145,7 +184,11 @@ describe('FarmRepository', () => {
 
       expect(repository.findOne).toHaveBeenCalledWith({
         where: { id: farmModel.id, deletedAt: null },
-        relations: ['farmCropHarvests', 'farmCropHarvests.harvest'],
+        relations: [
+          'farmCropHarvests',
+          'farmCropHarvests.crop',
+          'farmCropHarvests.harvest',
+        ],
         order: { createdAt: 'DESC' },
       });
 
@@ -160,17 +203,17 @@ describe('FarmRepository', () => {
           totalArea: new Decimal(farmModel.totalArea),
           vegetationArea: new Decimal(farmModel.vegetationArea),
           agricultureArea: new Decimal(farmModel.agricultureArea),
-          crops: farmModel.farmCropHarvests.map(farmCropHarvest => {
-            return Crop.instance({
-              id: farmCropHarvest.cropId,
-              harvestDate: farmCropHarvest.harvestDate,
-              plantedArea: new Decimal(farmCropHarvest.plantedArea),
-              harvest: Harvest.instance({
-                id: farmCropHarvest.harvest.id,
-                year: farmCropHarvest.harvest.year,
-                createdAt: farmCropHarvest.harvest.createdAt,
-              }),
+          farmCropHarvests: farmModel.farmCropHarvests.map(farmCropHarvest => {
+            return FarmCropHarvest.instance({
+              farmId: farmCropHarvest.farmId,
+              cropId: farmCropHarvest.cropId,
+              name: farmCropHarvest.crop.name,
+              harvestId: farmCropHarvest.harvestId,
               createdAt: farmCropHarvest.createdAt,
+              farmCropHarvestId: farmCropHarvest.id,
+              harvestDate: farmCropHarvest.harvestDate,
+              harvestYear: farmCropHarvest.harvest.year,
+              plantedArea: new Decimal(farmCropHarvest.plantedArea),
             });
           }),
         })
@@ -183,6 +226,46 @@ describe('FarmRepository', () => {
       const result = await farmRepository.findById('non-existent-id');
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('#update', () => {
+    it('should update a farm', async () => {
+      const farmModel = FarmFixture.createFarm();
+      const farmEntity = FarmFixture.entity(farmModel);
+
+      await farmRepository.update(farmEntity);
+
+      expect(repository.update).toHaveBeenCalledWith(farmEntity.id, {
+        name: farmEntity.name,
+        city: farmEntity.city,
+        state: farmEntity.state,
+        ruralProducerId: farmEntity.ruralProducerId,
+      });
+    });
+  });
+
+  describe('#softDelete', () => {
+    it('should soft delete a farm and its associated crops', async () => {
+      const farmId = 'test-farm-id';
+
+      await farmRepository.softDelete(farmId);
+
+      expect(
+        farmCropHarvestRepository.manager.transaction
+      ).toHaveBeenCalledWith(expect.any(Function));
+
+      expect(entityManager.softDelete).toHaveBeenNthCalledWith(
+        1,
+        FarmCropHarvestModel,
+        { farmId }
+      );
+
+      expect(entityManager.softDelete).toHaveBeenNthCalledWith(
+        2,
+        FarmModel,
+        farmId
+      );
     });
   });
 });
