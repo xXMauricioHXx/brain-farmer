@@ -119,9 +119,7 @@ describe('CropService', () => {
       const id = uuidv4();
       jest.spyOn(cropRepository, 'findById').mockResolvedValue(null);
 
-      await expect(cropService.findById(id)).rejects.toThrow(
-        `Crop with id ${id} not found`
-      );
+      await expect(cropService.findById(id)).rejects.toThrow(`Crop not found`);
 
       expect(cropRepository.findById).toHaveBeenCalledWith(id);
     });
@@ -156,7 +154,7 @@ describe('CropService', () => {
       jest.spyOn(cropRepository, 'findById').mockResolvedValue(null);
 
       await expect(cropService.update(id, input)).rejects.toThrow(
-        `Crop with id ${id} not found`
+        `Crop not found`
       );
 
       expect(cropRepository.findById).toHaveBeenCalledWith(id);
@@ -182,9 +180,7 @@ describe('CropService', () => {
 
       jest.spyOn(cropRepository, 'findById').mockResolvedValue(null);
 
-      await expect(cropService.delete(id)).rejects.toThrow(
-        `Crop with id ${id} not found`
-      );
+      await expect(cropService.delete(id)).rejects.toThrow(`Crop not found`);
 
       expect(cropRepository.findById).toHaveBeenCalledWith(id);
       expect(cropRepository.softDelete).not.toHaveBeenCalled();

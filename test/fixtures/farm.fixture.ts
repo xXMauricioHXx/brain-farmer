@@ -47,11 +47,11 @@ export class FarmFixture {
       max: 1000,
     });
     const agricultureArea = faker.number.float({
-      min: 0,
+      min: 2,
       max: totalArea / 2,
     });
     const vegetationArea = faker.number.float({
-      min: 0,
+      min: 2,
       max: totalArea - agricultureArea,
     });
 

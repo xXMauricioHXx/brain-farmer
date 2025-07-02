@@ -95,7 +95,7 @@ describe('HarvestService', () => {
       jest.spyOn(harvestRepository, 'findById').mockResolvedValue(null);
 
       await expect(harvestService.findById(harvestId)).rejects.toThrowError(
-        `Harvest with id ${harvestId} not found`
+        `Harvest not found`
       );
     });
   });
@@ -146,7 +146,7 @@ describe('HarvestService', () => {
       jest.spyOn(harvestRepository, 'findById').mockResolvedValue(null);
 
       await expect(harvestService.delete(harvestId)).rejects.toThrowError(
-        `Harvest with id ${harvestId} not found`
+        `Harvest not found`
       );
     });
   });

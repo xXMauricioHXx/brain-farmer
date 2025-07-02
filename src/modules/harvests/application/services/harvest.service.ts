@@ -34,7 +34,7 @@ export class HarvestService {
     const harvest = await this.harvestRepository.findById(id);
 
     if (!harvest) {
-      throw new NotFoundException(`Harvest with id ${id} not found`);
+      throw new NotFoundException(`Harvest not found`);
     }
 
     return harvest;
@@ -44,7 +44,7 @@ export class HarvestService {
     const harvest = await this.harvestRepository.findById(id);
 
     if (!harvest) {
-      throw new NotFoundException(`Harvest with id ${id} not found`);
+      throw new NotFoundException(`Harvest not found`);
     }
 
     harvest.year = input.year;
@@ -56,7 +56,7 @@ export class HarvestService {
     const harvest = await this.harvestRepository.findById(id);
 
     if (!harvest) {
-      throw new NotFoundException(`Harvest with id ${id} not found`);
+      throw new NotFoundException(`Harvest not found`);
     }
 
     return this.harvestRepository.softDelete(id);

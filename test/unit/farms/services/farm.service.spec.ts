@@ -36,6 +36,7 @@ describe('FarmService', () => {
             findById: jest.fn(),
             update: jest.fn(),
             softDelete: jest.fn(),
+            findPaginated: jest.fn(),
           },
         },
         {
@@ -120,9 +121,7 @@ describe('FarmService', () => {
       expect(error).toBeDefined();
       expect(error.status).toBe(404);
       expect(error).toBeInstanceOf(NotFoundException);
-      expect(error.message).toBe(
-        `Rural producer with ID ${farm.ruralProducerId} not found.`
-      );
+      expect(error.message).toBe(`Rural producer not found.`);
     });
 
     it('should throw UnprocessableEntityException when InvalidDocumentException is thrown', async () => {
@@ -169,12 +168,14 @@ describe('FarmService', () => {
         limit: 10,
       };
 
-      jest.spyOn(farmRepository, 'findAll').mockResolvedValue(farmEntities);
+      jest
+        .spyOn(farmRepository, 'findPaginated')
+        .mockResolvedValue([farmEntities, 3]);
 
       const result = await farmService.listPaginated(input);
 
-      expect(result).toHaveLength(3);
-      expect(result[0]).toEqual({
+      expect(result.total).toEqual(3);
+      expect(result.items[0]).toEqual({
         id: farmModels[0].id,
         name: farmModels[0].name,
         city: farmModels[0].city,
@@ -246,7 +247,7 @@ describe('FarmService', () => {
       expect(error).toBeDefined();
       expect(error.status).toBe(404);
       expect(error).toBeInstanceOf(NotFoundException);
-      expect(error.message).toBe(`Farm with ID ${nonExistentId} not found.`);
+      expect(error.message).toBe(`Farm not found.`);
     });
   });
 
@@ -306,7 +307,7 @@ describe('FarmService', () => {
       expect(error).toBeDefined();
       expect(error.status).toBe(404);
       expect(error).toBeInstanceOf(NotFoundException);
-      expect(error.message).toBe(`Farm with ID ${nonExistentId} not found.`);
+      expect(error.message).toBe(`Farm not found.`);
     });
   });
 });
