@@ -25,7 +25,13 @@ import {
 } from '@nestjs/swagger';
 import { ListHarvestsOutput } from '../dtos/list-harvests.dto';
 import { PARAM_ID_EXAMPLE } from '@/shared/examples/param-id.example';
-import { CREATE_HARVEST_OK } from '../dtos/examples/harvest-response.example';
+import {
+  CREATE_HARVEST_OK,
+  DELETE_HARVEST_OK,
+  FIND_HARVEST_BY_ID_OK,
+  HARVEST_NOT_FOUND,
+  UPDATE_HARVEST_OK,
+} from '../dtos/examples/harvest-response.example';
 
 @ApiTags('Harvests')
 @Controller('harvests')
@@ -51,7 +57,8 @@ export class HarvestController {
   @Get(':id')
   @ApiOperation({ summary: 'Busca uma safra pelo ID' })
   @ApiParam(PARAM_ID_EXAMPLE)
-  @ApiResponse({ status: 200, type: ListHarvestsOutput })
+  @ApiResponse(FIND_HARVEST_BY_ID_OK)
+  @ApiResponse(HARVEST_NOT_FOUND)
   findById(@Param('id') id: string): Promise<ListHarvestsOutput> {
     return this.harvestService.findById(id);
   }
@@ -59,8 +66,9 @@ export class HarvestController {
   @Put('/:id')
   @ApiOperation({ summary: 'Atualiza uma safra pelo ID' })
   @ApiParam(PARAM_ID_EXAMPLE)
+  @ApiResponse(HARVEST_NOT_FOUND)
   @ApiBody({ type: CreateHarvestInput })
-  @ApiResponse({ status: 204, description: 'Atualização bem-sucedida' })
+  @ApiResponse(UPDATE_HARVEST_OK)
   update(
     @Param('id') id: string,
     @Body() input: CreateHarvestInput
@@ -71,7 +79,7 @@ export class HarvestController {
   @Delete('/:id')
   @ApiOperation({ summary: 'Remove uma safra pelo ID' })
   @ApiParam(PARAM_ID_EXAMPLE)
-  @ApiResponse({ status: 204, description: 'Remoção bem-sucedida' })
+  @ApiResponse(DELETE_HARVEST_OK)
   @HttpCode(HttpStatus.NO_CONTENT)
   delete(@Param('id', new ParseUUIDPipe()) id: string): Promise<void> {
     return this.harvestService.delete(id);
