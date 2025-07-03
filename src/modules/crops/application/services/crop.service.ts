@@ -10,6 +10,7 @@ import { CROP_REPOSITORY } from '@/shared/repositories/tokens';
 import { ListCropOutput } from '../dtos/list-crop.dto';
 import { Crop } from '@/crops/domain/entities/crop.entity';
 import { ICropRepository } from '@/crops/domain/repositories/crop.repository';
+import { logger } from '@/shared/logger/winston.logger';
 
 @Injectable()
 export class CropService {
@@ -19,6 +20,7 @@ export class CropService {
   ) {}
 
   async create(input: CreateCropInput): Promise<CreateCropOutput> {
+    logger.info(`Creating crop with name: ${input.name}`);
     const crop = Crop.instance({
       id: uuidv4(),
       name: input.name,
@@ -26,6 +28,7 @@ export class CropService {
 
     const createdCrop = await this.cropRepository.create(crop);
 
+    logger.info(`Crop created with ID: ${createdCrop.id}`);
     return {
       id: createdCrop.id,
       name: createdCrop.name,
@@ -35,6 +38,7 @@ export class CropService {
 
   async findAll(): Promise<ListCropOutput[]> {
     const crops = await this.cropRepository.findAll();
+    logger.info(`Found ${crops.length} crops`);
 
     return crops.map(crop => ({
       id: crop.id,
@@ -44,9 +48,11 @@ export class CropService {
   }
 
   async findById(id: string): Promise<ListCropOutput> {
+    logger.info(`Finding crop by ID: ${id}`);
     const crop = await this.cropRepository.findById(id);
 
     if (!crop) {
+      logger.error(`Crop with ID ${id} not found`);
       throw new NotFoundException(`Crop not found`);
     }
 
@@ -58,9 +64,11 @@ export class CropService {
   }
 
   async update(id: string, input: CreateCropInput): Promise<void> {
+    logger.info(`Updating crop with ID: ${id}`);
     const crop = await this.cropRepository.findById(id);
 
     if (!crop) {
+      logger.error(`Crop with ID ${id} not found`);
       throw new NotFoundException(`Crop not found`);
     }
 
@@ -70,9 +78,11 @@ export class CropService {
   }
 
   async delete(id: string): Promise<void> {
+    logger.info(`Deleting crop with ID: ${id}`);
     const crop = await this.cropRepository.findById(id);
 
     if (!crop) {
+      logger.error(`Crop with ID ${id} not found`);
       throw new NotFoundException(`Crop not found`);
     }
 

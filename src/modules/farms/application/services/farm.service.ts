@@ -27,19 +27,16 @@ import { IFarmRepository } from '@/farms/domain/repositories/farm.repository';
 import { InvalidFarmAreaException } from '@/farms/domain/exceptions/invalid-farm-area.exception';
 import { IRuralProducerRepository } from '@/rural-producers/domain/repositories/rural-producer.repository';
 import { PaginatedQueryOutput } from '@/shared/repositories/dtos/paginated-query.dto';
+import { logger } from '@/shared/logger/winston.logger';
 
 @Injectable()
 export class FarmService {
-  private logger;
-
   constructor(
     @Inject(FARM_REPOSITORY)
     private readonly farmRepository: IFarmRepository,
     @Inject(RURAL_PRODUCER_REPOSITORY)
     private readonly ruralProducerRepository: IRuralProducerRepository
-  ) {
-    this.logger = new Logger(FarmService.name);
-  }
+  ) {}
 
   async create(input: CreateFarmInput): Promise<CreateFarmOutput> {
     try {
@@ -57,6 +54,7 @@ export class FarmService {
         await this.ruralProducerRepository.checkExistsById(ruralProducerId);
 
       if (!foundRuralProducer) {
+        logger.error(`Rural producer with ID ${ruralProducerId} not found.`);
         throw new NotFoundException(`Rural producer not found.`);
       }
 
@@ -85,7 +83,7 @@ export class FarmService {
         createdAt: createdFarm.createdAt,
       };
     } catch (error) {
-      this.logger.error(`Error creating farm: ${error.message}`, error.stack);
+      logger.error(`Error creating farm: ${error.message}`, error.stack);
 
       if (error instanceof InvalidFarmAreaException) {
         throw new UnprocessableEntityException(error.message);
@@ -98,6 +96,9 @@ export class FarmService {
   async listPaginated(
     input: ListFarmsInput
   ): Promise<PaginatedQueryOutput<ListFarmsOutput>> {
+    logger.info(
+      `Listing farms with pagination: page=${input.page}, limit=${input.limit}, state=${input.state}`
+    );
     const [farms, total] = await this.farmRepository.findPaginated(input);
 
     return {
@@ -109,9 +110,11 @@ export class FarmService {
   }
 
   async findById(id: string): Promise<ListFarmsOutput> {
+    logger.info(`Finding farm by ID: ${id}`);
     const farm = await this.farmRepository.findById(id);
 
     if (!farm) {
+      logger.error(`Farm with ID ${id} not found.`);
       throw new NotFoundException(`Farm not found.`);
     }
 
@@ -119,14 +122,19 @@ export class FarmService {
   }
 
   async update(farmId: string, input: UpdateFarmInput): Promise<void> {
+    logger.info(`Updating farm with ID: ${farmId}`);
     const farm = await this.farmRepository.findById(farmId);
 
     if (!farm) {
+      logger.error(`Farm with ID ${farmId} not found.`);
       throw new NotFoundException(`Farm not found.`);
     }
 
     const { name, city, state, ruralProducerId } = input;
 
+    logger.info(
+      `Updating farm fields: name=${name}, city=${city}, state=${state}, ruralProducerId=${ruralProducerId}`
+    );
     farm.name = name || farm.name;
     farm.city = city || farm.city;
     farm.state = state || farm.state;
@@ -136,9 +144,11 @@ export class FarmService {
   }
 
   async delete(id: string): Promise<void> {
+    logger.info(`Deleting farm with ID: ${id}`);
     const farm = await this.farmRepository.findById(id);
 
     if (!farm) {
+      logger.error(`Farm with ID ${id} not found.`);
       throw new NotFoundException(`Farm not found.`);
     }
 

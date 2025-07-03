@@ -16,7 +16,7 @@ export class CreateRuralProducerTable1751026945429
     `);
 
     await queryRunner.query(`
-      CREATE INDEX IF NOT EXISTS idx_rural_producers_document ON tb_rural_producers(document);
+      CREATE INDEX IF NOT EXISTS idx_rural_producers_document ON tb_rural_producers(document) WHERE deleted_at IS NULL;
     `);
   }
 

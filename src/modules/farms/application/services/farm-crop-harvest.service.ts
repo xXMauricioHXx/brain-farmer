@@ -20,6 +20,7 @@ import { ICropRepository } from '@/crops/domain/repositories/crop.repository';
 import { FarmCropHarvest } from '@/farms/domain/entities/farm-crop-harvest.entity';
 import { IHarvestRepository } from '@/harvests/domain/repositories/harvest.repository';
 import { PlantedAreaExceedsLimitException } from '@/farms/domain/exceptions/planted-area-exceeds-limit.exception';
+import { logger } from '@/shared/logger/winston.logger';
 
 @Injectable()
 export class FarmCropHarvestService {
@@ -37,9 +38,13 @@ export class FarmCropHarvestService {
     inputs: CropToFarmInput[]
   ): Promise<AddCropsToFarmOutput> {
     try {
+      logger.info(
+        `Assigning crops to farm with ID: ${farmId}, number of crops: ${inputs.length}`
+      );
       const farm = await this.farmRepository.findById(farmId);
 
       if (!farm) {
+        logger.error(`Farm with ID ${farmId} not found.`);
         throw new NotFoundException(`Farm not found.`);
       }
 
@@ -47,16 +52,21 @@ export class FarmCropHarvestService {
         inputs.map(async input => {
           const { cropId, harvestDate, harvestId, plantedArea } = input;
 
+          logger.info(
+            `Processing crop ID: ${cropId}, harvest ID: ${harvestId}, harvest date: ${harvestDate}, planted area: ${plantedArea}`
+          );
           const [crop, harvest] = await Promise.all([
             this.cropRepository.findById(cropId),
             this.harvestRepository.findById(harvestId),
           ]);
 
           if (!crop) {
+            logger.error(`Crop with ID ${cropId} not found.`);
             throw new NotFoundException(`Crop not found.`);
           }
 
           if (!harvest) {
+            logger.error(`Harvest with ID ${harvestId} not found.`);
             throw new NotFoundException(`Harvest not found.`);
           }
 
@@ -67,6 +77,9 @@ export class FarmCropHarvestService {
             harvestDate: harvestDate,
             name: crop.name,
           });
+          logger.info(
+            `Creating FarmCropHarvest for crop ID: ${crop.id}, harvest ID: ${harvest.id}`
+          );
 
           farmCropHarvest.defineHarvestDate(harvestDate);
           farmCropHarvest.definePlantedArea(plantedArea);
@@ -78,6 +91,9 @@ export class FarmCropHarvestService {
         })
       );
 
+      logger.info(
+        `Assigning ${farmCropHarvests.length} crops to farm with ID: ${farm.id}`
+      );
       const assignedFarm = await this.farmRepository.assignCropsToFarm(
         farm,
         farmCropHarvests
@@ -94,9 +110,13 @@ export class FarmCropHarvestService {
   }
 
   async delete(farmId: string, farmCropHarvestId: string): Promise<void> {
+    logger.info(
+      `Deleting farm crop harvest with ID: ${farmCropHarvestId} from farm with ID: ${farmId}`
+    );
     const farm = await this.farmRepository.findById(farmId);
 
     if (!farm) {
+      logger.error(`Farm with ID ${farmId} not found.`);
       throw new NotFoundException(`Farm not found.`);
     }
 
@@ -104,10 +124,14 @@ export class FarmCropHarvestService {
       await this.farmRepository.findFarmCropHarvestById(farmCropHarvestId);
 
     if (!farmCropHarvest) {
+      logger.error(`Farm crop harvest with ID ${farmCropHarvestId} not found.`);
       throw new NotFoundException(`Farm crop harvest not found.`);
     }
 
     if (farmCropHarvest.farmId !== farmId) {
+      logger.error(
+        `Farm crop harvest with ID ${farmCropHarvestId} does not belong to farm with ID ${farmId}.`
+      );
       throw new UnprocessableEntityException(
         `Farm crop harvest does not belong to farm.`
       );

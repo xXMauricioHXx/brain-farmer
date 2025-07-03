@@ -18,31 +18,29 @@ import { ListRuralProducerOutput } from '@/rural-producers/application/dtos/list
 import { UpdateRuralProducerInput } from '@/rural-producers/application/dtos/update-rural-producer.dto';
 import { IRuralProducerRepository } from '@/rural-producers/domain/repositories/rural-producer.repository';
 import { InvalidDocumentException } from '@/rural-producers/domain/execeptions/invalid-document.exception';
+import { logger } from '@/shared/logger/winston.logger';
 
 @Injectable()
 export class RuralProducerService {
-  private logger: Logger;
-
   constructor(
     @Inject(RURAL_PRODUCER_REPOSITORY)
     private readonly ruralProducerRepository: IRuralProducerRepository
-  ) {
-    this.logger = new Logger(RuralProducerService.name);
-  }
+  ) {}
 
   async create(
     input: CreateRuralProducerInput
   ): Promise<CreateRuralProducerOutput> {
     try {
+      logger.info(
+        `Creating rural producer with name: ${input.name} and document: ${input.document}`
+      );
       const { name, document } = input;
 
       const foundRuralProducer =
         await this.ruralProducerRepository.checkExistsByDocument(document);
 
       if (foundRuralProducer) {
-        this.logger.warn(
-          `Rural producer with provided document already exists.`
-        );
+        logger.warn(`Rural producer with document ${document} already exists.`);
         throw new ConflictException('Unable to process request');
       }
 
@@ -62,7 +60,7 @@ export class RuralProducerService {
         createdAt: newRuralProducer.createdAt,
       };
     } catch (error) {
-      this.logger.error(
+      logger.error(
         `Error creating rural producer: ${error.message}`,
         error.stack
       );
@@ -76,9 +74,9 @@ export class RuralProducerService {
   }
 
   async list(): Promise<ListRuralProducerOutput[]> {
+    logger.info('Listing all rural producers');
     const ruralProducers = await this.ruralProducerRepository.findAll();
 
-    this.logger.log(`Found ${ruralProducers.length} rural producers.`);
     return ruralProducers.map(ruralProducer => ({
       id: ruralProducer.id,
       name: ruralProducer.name,
@@ -88,10 +86,11 @@ export class RuralProducerService {
   }
 
   async findById(id: string): Promise<ListRuralProducerOutput> {
+    logger.info(`Finding rural producer by ID: ${id}`);
     const ruralProducer = await this.ruralProducerRepository.findById(id);
 
     if (!ruralProducer) {
-      this.logger.warn(`Rural producer with id ${id} not found.`);
+      logger.error(`Rural producer with id ${id} not found.`);
       throw new NotFoundException('Rural producer not found');
     }
 
@@ -104,10 +103,11 @@ export class RuralProducerService {
   }
 
   async update(id: string, input: UpdateRuralProducerInput): Promise<void> {
+    logger.info(`Updating rural producer with ID: ${id}`);
     const ruralProducer = await this.ruralProducerRepository.findById(id);
 
     if (!ruralProducer) {
-      this.logger.warn(`Rural producer with id ${id} not found.`);
+      logger.error(`Rural producer with id ${id} not found.`);
       throw new NotFoundException('Rural producer not found');
     }
 
@@ -117,10 +117,11 @@ export class RuralProducerService {
   }
 
   async delete(id: string): Promise<void> {
+    logger.info(`Deleting rural producer with ID: ${id}`);
     const ruralProducer = await this.ruralProducerRepository.findById(id);
 
     if (!ruralProducer) {
-      this.logger.warn(`Rural producer with id ${id} not found.`);
+      logger.error(`Rural producer with id ${id} not found.`);
       throw new NotFoundException('Rural producer not found');
     }
 

@@ -5,6 +5,7 @@ import { BaseEntity } from '@/shared/contracts/base-entity';
 import { FarmCropHarvest } from '@/farms/domain/entities/farm-crop-harvest.entity';
 import { InvalidFarmAreaException } from '@/farms/domain/exceptions/invalid-farm-area.exception';
 import { PlantedAreaExceedsLimitException } from '@/farms/domain/exceptions/planted-area-exceeds-limit.exception';
+import { logger } from '@/shared/logger/winston.logger';
 
 export type FarmAttributes = {
   id: string;
@@ -75,6 +76,9 @@ export class Farm extends BaseEntity {
   }
 
   private validateAreas(): void {
+    logger.info(
+      `Validating farm areas: totalArea=${this.totalArea}, agricultureArea=${this.agricultureArea}, vegetationArea=${this.vegetationArea}`
+    );
     const total = this.agricultureArea.plus(this.vegetationArea);
     if (total.gt(this.totalArea)) {
       throw new InvalidFarmAreaException(
@@ -93,6 +97,9 @@ export class Farm extends BaseEntity {
 
     const totalPlantedArea = currentPlantedArea.plus(crop.plantedArea);
 
+    logger.info(
+      `Validating planted area limit: currentPlantedArea=${currentPlantedArea.toFixed()}, cropPlantedArea=${crop.plantedArea.toFixed()}, totalPlantedArea=${totalPlantedArea.toFixed()}, agricultureArea=${this.agricultureArea.toFixed()}`
+    );
     if (totalPlantedArea.gt(this.agricultureArea)) {
       throw new PlantedAreaExceedsLimitException(
         totalPlantedArea.toFixed(),
