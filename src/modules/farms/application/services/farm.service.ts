@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   Inject,
   Injectable,
-  Logger,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -23,11 +22,11 @@ import {
   FARM_REPOSITORY,
   RURAL_PRODUCER_REPOSITORY,
 } from '@/shared/repositories/tokens';
+import { logger } from '@/shared/logger/winston.logger';
 import { IFarmRepository } from '@/farms/domain/repositories/farm.repository';
+import { PaginatedQueryOutput } from '@/shared/repositories/dtos/paginated-query.dto';
 import { InvalidFarmAreaException } from '@/farms/domain/exceptions/invalid-farm-area.exception';
 import { IRuralProducerRepository } from '@/rural-producers/domain/repositories/rural-producer.repository';
-import { PaginatedQueryOutput } from '@/shared/repositories/dtos/paginated-query.dto';
-import { logger } from '@/shared/logger/winston.logger';
 
 @Injectable()
 export class FarmService {

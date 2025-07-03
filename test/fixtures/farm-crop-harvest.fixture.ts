@@ -1,9 +1,10 @@
-import { CropModel } from '@/database/models/crop.model';
-import { FarmCropHarvestModel } from '@/database/models/farm-crop-harvest.model';
-import { HarvestModel } from '@/database/models/harvest.model';
-import { FarmCropHarvest } from '@/farms/domain/entities/farm-crop-harvest.entity';
-import { fa, faker } from '@faker-js/faker/.';
 import Decimal from 'decimal.js';
+import { faker } from '@faker-js/faker/.';
+
+import { CropModel } from '@/database/models/crop.model';
+import { HarvestModel } from '@/database/models/harvest.model';
+import { FarmCropHarvestModel } from '@/database/models/farm-crop-harvest.model';
+import { FarmCropHarvest } from '@/farms/domain/entities/farm-crop-harvest.entity';
 
 export class FarmCropHarvestFixture {
   public static createFarmCropHarvest(

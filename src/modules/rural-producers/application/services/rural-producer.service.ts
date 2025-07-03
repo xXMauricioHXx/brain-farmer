@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import {
   Inject,
-  Logger,
   Injectable,
   BadRequestException,
   ConflictException,
@@ -12,13 +11,13 @@ import {
   CreateRuralProducerInput,
   CreateRuralProducerOutput,
 } from '@/rural-producers/application/dtos/create-rural-producer.dto';
+import { logger } from '@/shared/logger/winston.logger';
 import { RURAL_PRODUCER_REPOSITORY } from '@/shared/repositories/tokens';
 import { RuralProducer } from '@/rural-producers/domain/entities/rural-producer.entity';
 import { ListRuralProducerOutput } from '@/rural-producers/application/dtos/list-rural-producer.dto';
 import { UpdateRuralProducerInput } from '@/rural-producers/application/dtos/update-rural-producer.dto';
 import { IRuralProducerRepository } from '@/rural-producers/domain/repositories/rural-producer.repository';
-import { InvalidDocumentException } from '@/rural-producers/domain/execeptions/invalid-document.exception';
-import { logger } from '@/shared/logger/winston.logger';
+import { InvalidDocumentException } from '@/rural-producers/domain/exceptions/invalid-document.exception';
 
 @Injectable()
 export class RuralProducerService {

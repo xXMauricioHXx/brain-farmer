@@ -13,7 +13,7 @@ export class BaseEntity {
 
   private formatValidationErrors(errors: ValidationError[]): string {
     return errors
-      .map((error) => {
+      .map(error => {
         const constraints = error.constraints
           ? Object.values(error.constraints).join(', ')
           : 'Unknown validation error';

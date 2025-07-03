@@ -1,5 +1,5 @@
 import { IsUUID, IsString, IsOptional, IsInstance } from 'class-validator';
-import { Decimal } from 'decimal.js';
+
 import { BaseEntity } from '@/shared/contracts/base-entity';
 
 export type CropAttributes = {
