@@ -91,7 +91,7 @@ export class Farm extends BaseEntity {
 
   public validatePlantedAreaLimit(crop: FarmCropHarvest): void {
     const currentPlantedArea = this.farmCropHarvests.reduce(
-      (acc, crop) => acc.plus(crop.plantedArea),
+      (acc, farmCropHarvest) => acc.plus(farmCropHarvest.plantedArea),
       new Decimal(0)
     );
 

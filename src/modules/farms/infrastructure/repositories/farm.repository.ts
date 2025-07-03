@@ -5,12 +5,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { FarmModel } from '@/database/models/farm.model';
 import { Farm } from '@/farms/domain/entities/farm.entity';
+import { ListFarmsInput } from '@/farms/application/dtos/list-farms.dto';
+import { paginatedOptions } from '@/shared/repositories/paginated-options';
 import { IFarmRepository } from '@/farms/domain/repositories/farm.repository';
 import { FarmCropHarvestModel } from '@/database/models/farm-crop-harvest.model';
 import { FarmCropHarvest } from '@/farms/domain/entities/farm-crop-harvest.entity';
-import { PaginatedQueryInput } from '@/shared/repositories/dtos/paginated-query.dto';
-import { ListFarmsInput } from '@/farms/application/dtos/list-farms.dto';
-import { paginatedOptions } from '@/shared/repositories/paginated-options';
 
 export class FarmRepository implements IFarmRepository {
   constructor(

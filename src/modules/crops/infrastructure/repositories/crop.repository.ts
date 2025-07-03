@@ -1,4 +1,4 @@
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Crop } from '@/crops/domain/entities/crop.entity';

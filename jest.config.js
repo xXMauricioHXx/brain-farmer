@@ -24,6 +24,7 @@ module.exports = {
     '!<rootDir>/src/modules/**/application/dtos/*.ts',
     '!<rootDir>/src/modules/**/domain/entities/*.ts',
     '!<rootDir>/src/app.module.ts',
+    '!<rootDir>/src/modules/**/application/dtos/examples/*',
   ],
   coverageDirectory: '<rootDir>/coverage',
 };
